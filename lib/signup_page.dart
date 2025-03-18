@@ -47,7 +47,7 @@ class _SignUpPageState extends State<SignUpPage> {
                       textAlign: TextAlign.center,
                       decoration: InputDecoration(
                         border: InputBorder.none,
-                        hintText: "Selin Çolak",
+                        hintText: "Ahmet Serdar",
                       ),
                     ),
                   ),
