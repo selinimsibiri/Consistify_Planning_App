@@ -1,5 +1,10 @@
+import 'dart:convert';
+
+import 'package:crypto/crypto.dart';
 import 'package:flutter/material.dart';
-import 'package:sayfa_yonlendirme/login_page.dart';
+import 'package:sayfa_yonlendirme/db/database_helper.dart';
+import 'package:sayfa_yonlendirme/models/user.dart';
+import 'package:sayfa_yonlendirme/screens/login_page.dart';
 
 class SignUpPage extends StatefulWidget {
   const SignUpPage({super.key});
@@ -9,6 +14,33 @@ class SignUpPage extends StatefulWidget {
 }
 
 class _SignUpPageState extends State<SignUpPage> {
+  final TextEditingController _usernameController = TextEditingController();
+  final TextEditingController _emailController = TextEditingController();
+  final TextEditingController _passwordController = TextEditingController();
+
+  void _tryRegister() async {
+    final username = _usernameController.text;
+    final email = _emailController.text;
+    final password = _passwordController.text;
+
+    final passwordHash = sha256.convert(utf8.encode(password)).toString();
+
+    final newUser = User(
+      username: username,
+      email: email,
+      passwordHash: passwordHash,
+    );
+
+    final result = await DatabaseHelper.instance.registerUser(newUser);
+
+    if (result == -1) {
+      print("\n***\n❗Bu kullanıcı adı ya da e-posta zaten kayıtlı!\n***\n username: ${newUser?.username}\n email: ${newUser?.email}\n hash: ${newUser?.passwordHash}\n***\n");
+    } else {
+      print("✅ Kayıt başarılı!\n***\n username: ${newUser?.username}\n email: ${newUser?.email}\n hash: ${newUser?.passwordHash}\n***\n");
+      // Ana ekrana yönlendirme yapılabilir
+    }
+  }
+
   @override
   Widget build(BuildContext context) {
     return Scaffold(
@@ -70,6 +102,7 @@ class _SignUpPageState extends State<SignUpPage> {
                     ),
                     height: MediaQuery.of(context).size.height * 0.055,
                     child: TextField(
+                      controller: _usernameController,
                       textAlign: TextAlign.center,
                       obscureText: true,
                       decoration: InputDecoration(
@@ -112,6 +145,7 @@ class _SignUpPageState extends State<SignUpPage> {
                     ),                      
                     height: MediaQuery.of(context).size.height * 0.055,
                     child: TextField(
+                      controller: _emailController,
                       textAlign: TextAlign.center,
                       obscureText: true,
                       decoration: InputDecoration(
@@ -154,6 +188,7 @@ class _SignUpPageState extends State<SignUpPage> {
                     ),
                     height: MediaQuery.of(context).size.height * 0.055,
                     child: TextField(
+                      controller: _passwordController,
                       textAlign: TextAlign.center,
                       obscureText: true,
                       decoration: InputDecoration(
@@ -219,7 +254,7 @@ class _SignUpPageState extends State<SignUpPage> {
                     padding: const EdgeInsets.symmetric(horizontal: 28.0),
                   child: ElevatedButton(
                     onPressed: () {
-                      // BURASI SONRA DOLDURULACAK
+                      _tryRegister();
                     },
                     style: ElevatedButton.styleFrom(
                       backgroundColor: Color(0xFF984fff), // Mor renk
@@ -230,7 +265,7 @@ class _SignUpPageState extends State<SignUpPage> {
                     ),
                     child: Center(
                       child: Text(
-                        "Log in",
+                        "Sign Up",
                         style: TextStyle(
                           color: Colors.white, // Yazı rengi beyaz
                             fontWeight: FontWeight.w700,

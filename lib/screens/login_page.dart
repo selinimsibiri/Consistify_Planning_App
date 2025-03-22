@@ -1,5 +1,9 @@
+import 'dart:convert';
+
+import 'package:crypto/crypto.dart';
 import 'package:flutter/material.dart';
-import 'package:sayfa_yonlendirme/signup_page.dart';
+import 'package:sayfa_yonlendirme/db/database_helper.dart';
+import 'package:sayfa_yonlendirme/screens/signup_page.dart';
 
 class LogInPage extends StatefulWidget {
   const LogInPage({super.key});
@@ -9,13 +13,61 @@ class LogInPage extends StatefulWidget {
 }
 
 class _LogInPageState extends State<LogInPage> {
+  final TextEditingController _emailController = TextEditingController();
+  final TextEditingController _passwordController = TextEditingController();
+
+  List<String> columns = [];
+
+  void _tryLogin() async {
+    final email = _emailController.text;
+    final password = _passwordController.text;
+
+    final hash = sha256.convert(utf8.encode(password)).toString();
+
+    print("Giriş yapılan email: $email, hash: $hash"); // Debugging: Giriş yapılan email ve hash
+
+    final user = await DatabaseHelper.instance.loginUser(email, hash);
+
+    if (user != null) {
+      print("\n***\nHoş geldin ${user.username} 🧜‍♀️\nusername: ${user.username}\nemail: ${user.email}\nhash: ${user.passwordHash}\n***\n");
+      // Ana ekrana ya da diğer sayfaya yönlendir
+    } else {
+      print("\n***\n❌ Giriş başarısız!\n***\nusername: ${user?.username}\nemail: ${user?.email}\nhash: ${user?.passwordHash}\n***\n");
+      // Hata mesajı göster
+    }
+  }
+
+
+  Future<void> fetchColumns() async {
+    try {
+      List<String> fetchedColumns = await DatabaseHelper.instance.getUsersTableColumns();
+      // Kolonları konsola yazdır
+      print('\n***\nUsers tablosundaki kolonlar:\n***\n');
+      for (var column in fetchedColumns) {
+        print(column);
+      }
+    } catch (e) {
+      print("\n***\nHata: $e\n***\n");
+    }
+  }
+
+  Future<void> resetDatabaseAndFetchColumns() async {
+    try {
+      await DatabaseHelper.instance.resetUsersTable();
+    } catch (e) {
+      print("Hata: $e");
+    }
+  }
+
+
+
   @override
   Widget build(BuildContext context) {
     return Scaffold(
       backgroundColor: Color(0xFF404040),
       body: SafeArea(
         child: Padding(
-          padding: EdgeInsets.symmetric(horizontal: 25), // Kenarlara boşluk ekledik
+          padding: EdgeInsets.symmetric(horizontal: 25),
           child: Column(
             crossAxisAlignment: CrossAxisAlignment.center,
             children: [
@@ -40,7 +92,7 @@ class _LogInPageState extends State<LogInPage> {
                   fontSize: 40,
                   letterSpacing: 0.8,
                   height: 0.8,
-                  color: Color(0xFFFFFFFF), // Beyaz
+                  color: Color(0xFFFFFFFF),
                 ),
               ),
               
@@ -53,7 +105,7 @@ class _LogInPageState extends State<LogInPage> {
                   fontSize: 20,
                   fontWeight: FontWeight.w500,
                   letterSpacing: 1.4,
-                  color: Color(0xFF3d8dff), // Mavi
+                  color: Color(0xFF3d8dff),
                 ),
               ),
 
@@ -70,6 +122,7 @@ class _LogInPageState extends State<LogInPage> {
                   ),
                   height: MediaQuery.of(context).size.height * 0.055,
                   child: TextField(
+                    controller: _emailController,
                     textAlign: TextAlign.center,
                     decoration: InputDecoration(
                       border: InputBorder.none,
@@ -111,6 +164,7 @@ class _LogInPageState extends State<LogInPage> {
                       ),
                       height: MediaQuery.of(context).size.height * 0.055,
                       child: TextField(
+                        controller: _passwordController,
                         textAlign: TextAlign.center,
                         obscureText: true,
                         decoration: InputDecoration(
@@ -161,7 +215,8 @@ class _LogInPageState extends State<LogInPage> {
                     padding: const EdgeInsets.symmetric(horizontal: 28.0),
                     child: ElevatedButton(
                       onPressed: () {
-                        // BURASI SONRA DOLDURULACAK
+                       _tryLogin();  // Burada _tryLogin fonksiyonunu çağırıyoruz,
+                        //resetDatabaseAndFetchColumns();
                       },
                       style: ElevatedButton.styleFrom(
                         backgroundColor: Color(0xFF984fff), // Mor renk
