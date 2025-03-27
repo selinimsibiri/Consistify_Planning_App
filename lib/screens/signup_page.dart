@@ -34,9 +34,9 @@ class _SignUpPageState extends State<SignUpPage> {
     final result = await DatabaseHelper.instance.registerUser(newUser);
 
     if (result == -1) {
-      print("\n***\n❗Bu kullanıcı adı ya da e-posta zaten kayıtlı!\n***\n username: ${newUser?.username}\n email: ${newUser?.email}\n hash: ${newUser?.passwordHash}\n***\n");
+      print("\n***\n❗Bu kullanıcı adı ya da e-posta zaten kayıtlı!\n***\n username: ${newUser.username}\n email: ${newUser.email}\n hash: ${newUser.passwordHash}\n***\n");
     } else {
-      print("✅ Kayıt başarılı!\n***\n username: ${newUser?.username}\n email: ${newUser?.email}\n hash: ${newUser?.passwordHash}\n***\n");
+      print("✅ Kayıt başarılı!\n***\n username: ${newUser.username}\n email: ${newUser.email}\n hash: ${newUser.passwordHash}\n***\n");
       // Ana ekrana yönlendirme yapılabilir
     }
   }

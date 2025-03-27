@@ -3,6 +3,7 @@ import 'dart:convert';
 import 'package:crypto/crypto.dart';
 import 'package:flutter/material.dart';
 import 'package:sayfa_yonlendirme/db/database_helper.dart';
+import 'package:sayfa_yonlendirme/screens/profile_screen.dart';
 import 'package:sayfa_yonlendirme/screens/signup_page.dart';
 
 class LogInPage extends StatefulWidget {
@@ -50,16 +51,6 @@ class _LogInPageState extends State<LogInPage> {
       print("\n***\nHata: $e\n***\n");
     }
   }
-
-  Future<void> resetDatabaseAndFetchColumns() async {
-    try {
-      await DatabaseHelper.instance.resetUsersTable();
-    } catch (e) {
-      print("Hata: $e");
-    }
-  }
-
-
 
   @override
   Widget build(BuildContext context) {
@@ -191,7 +182,7 @@ class _LogInPageState extends State<LogInPage> {
                         Navigator.push(
                           context,
                           MaterialPageRoute(
-                            builder: (context) => SignUpPage(),
+                            builder: (context) => ProfileScreen(),
                           ),
                         );
                       },
