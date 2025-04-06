@@ -27,4 +27,4 @@ Future<void> checkDatabase() async {
   } catch (e) {
     print('\n***\nVeritabanına bağlanılamadı: $e\n***\n');
   }
-}
+} 

@@ -34,9 +34,13 @@ class _SignUpPageState extends State<SignUpPage> {
     final result = await DatabaseHelper.instance.registerUser(newUser);
 
     if (result == -1) {
-      print("\n***\n❗Bu kullanıcı adı ya da e-posta zaten kayıtlı!\n***\n username: ${newUser?.username}\n email: ${newUser?.email}\n hash: ${newUser?.passwordHash}\n***\n");
+      print(
+        "\n***\n❗Bu kullanıcı adı ya da e-posta zaten kayıtlı!\n***\n username: ${newUser?.username}\n email: ${newUser?.email}\n hash: ${newUser?.passwordHash}\n***\n",
+      );
     } else {
-      print("✅ Kayıt başarılı!\n***\n username: ${newUser?.username}\n email: ${newUser?.email}\n hash: ${newUser?.passwordHash}\n***\n");
+      print(
+        "✅ Kayıt başarılı!\n***\n username: ${newUser?.username}\n email: ${newUser?.email}\n hash: ${newUser?.passwordHash}\n***\n",
+      );
       // Ana ekrana yönlendirme yapılabilir
     }
   }
@@ -47,12 +51,14 @@ class _SignUpPageState extends State<SignUpPage> {
       backgroundColor: Color(0xFF404040),
       body: SafeArea(
         child: Padding(
-          padding: EdgeInsets.symmetric(horizontal: 25), // Kenarlara boşluk ekledik
+          padding: EdgeInsets.symmetric(
+            horizontal: 25,
+          ), // Kenarlara boşluk ekledik
           child: SingleChildScrollView(
             child: Column(
               crossAxisAlignment: CrossAxisAlignment.center,
               children: [
-                SizedBox(height: MediaQuery.of(context).size.height * 0.08),
+                SizedBox(height: MediaQuery.of(context).size.height * 0.03),
                 // log in text
                 Text(
                   "Create New",
@@ -76,19 +82,20 @@ class _SignUpPageState extends State<SignUpPage> {
                     color: Color(0xFFFFFFFF), // Beyaz
                   ),
                 ),
-                
+
                 SizedBox(height: MediaQuery.of(context).size.height * 0.04),
 
                 // name text
-                Text("NAME", 
-                style: TextStyle(
-                  fontSize: 20,
-                  fontWeight: FontWeight.w500,
-                  letterSpacing: 1.4,
-                  color: Color(0xFF3d8dff), // Mavi
+                Text(
+                  "NAME",
+                  style: TextStyle(
+                    fontSize: 20,
+                    fontWeight: FontWeight.w500,
+                    letterSpacing: 1.4,
+                    color: Color(0xFF3d8dff), // Mavi
+                  ),
                 ),
-                ),
-              
+
                 SizedBox(height: MediaQuery.of(context).size.height * 0.01),
 
                 // name textfield
@@ -97,14 +104,15 @@ class _SignUpPageState extends State<SignUpPage> {
                   child: Container(
                     decoration: BoxDecoration(
                       color: Color(0xFFececec),
-                      border: Border.all(color: Color.fromARGB(255, 203, 203, 203)),
+                      border: Border.all(
+                        color: Color.fromARGB(255, 203, 203, 203),
+                      ),
                       borderRadius: BorderRadius.circular(12),
                     ),
                     height: MediaQuery.of(context).size.height * 0.055,
                     child: TextField(
                       controller: _usernameController,
                       textAlign: TextAlign.center,
-                      obscureText: true,
                       decoration: InputDecoration(
                         border: InputBorder.none,
                         hintText: "Selin Çolak",
@@ -113,17 +121,17 @@ class _SignUpPageState extends State<SignUpPage> {
                           letterSpacing: 1.4,
                           color: const Color.fromARGB(255, 115, 115, 115),
                         ),
-                      contentPadding: EdgeInsets.symmetric(vertical: 12.0),
+                        contentPadding: EdgeInsets.symmetric(vertical: 12.0),
                       ),
                     ),
                   ),
                 ),
 
-              SizedBox(height: MediaQuery.of(context).size.height * 0.04),
+                SizedBox(height: MediaQuery.of(context).size.height * 0.04),
 
                 // email text
                 Text(
-                  "EMAIL", 
+                  "EMAIL",
                   style: TextStyle(
                     fontSize: 20,
                     fontWeight: FontWeight.w500,
@@ -140,14 +148,15 @@ class _SignUpPageState extends State<SignUpPage> {
                   child: Container(
                     decoration: BoxDecoration(
                       color: Color(0xFFececec),
-                      border: Border.all(color: Color.fromARGB(255, 115, 115, 115)),
+                      border: Border.all(
+                        color: Color.fromARGB(255, 115, 115, 115),
+                      ),
                       borderRadius: BorderRadius.circular(12),
-                    ),                      
+                    ),
                     height: MediaQuery.of(context).size.height * 0.055,
                     child: TextField(
                       controller: _emailController,
                       textAlign: TextAlign.center,
-                      obscureText: true,
                       decoration: InputDecoration(
                         border: InputBorder.none,
                         hintText: "mail@gmail.com",
@@ -156,25 +165,25 @@ class _SignUpPageState extends State<SignUpPage> {
                           letterSpacing: 1.4,
                           color: const Color.fromARGB(255, 115, 115, 115),
                         ),
-                      contentPadding: EdgeInsets.symmetric(vertical: 12.0),
+                        contentPadding: EdgeInsets.symmetric(vertical: 12.0),
                       ),
                     ),
                   ),
                 ),
 
-              SizedBox(height: MediaQuery.of(context).size.height * 0.04),
+                SizedBox(height: MediaQuery.of(context).size.height * 0.04),
 
                 // password text
                 Text(
-                  "PASSWORD", 
+                  "PASSWORD",
                   style: TextStyle(
-                      fontSize: 20,
-                      fontWeight: FontWeight.w500,
-                      letterSpacing: 1.4,
-                      color: Color(0xFF3d8dff),
-                    ),
+                    fontSize: 20,
+                    fontWeight: FontWeight.w500,
+                    letterSpacing: 1.4,
+                    color: Color(0xFF3d8dff),
+                  ),
                 ),
-              
+
                 SizedBox(height: MediaQuery.of(context).size.height * 0.01),
 
                 // password textfield
@@ -183,7 +192,9 @@ class _SignUpPageState extends State<SignUpPage> {
                   child: Container(
                     decoration: BoxDecoration(
                       color: Color(0xFFececec),
-                      border: Border.all(color: Color.fromARGB(255, 115, 115, 115)),
+                      border: Border.all(
+                        color: Color.fromARGB(255, 115, 115, 115),
+                      ),
                       borderRadius: BorderRadius.circular(12),
                     ),
                     height: MediaQuery.of(context).size.height * 0.055,
@@ -199,23 +210,23 @@ class _SignUpPageState extends State<SignUpPage> {
                           letterSpacing: 1.4,
                           color: const Color.fromARGB(255, 115, 115, 115),
                         ),
-                      contentPadding: EdgeInsets.symmetric(vertical: 12.0),
+                        contentPadding: EdgeInsets.symmetric(vertical: 12.0),
                       ),
                     ),
                   ),
                 ),
 
-              SizedBox(height: MediaQuery.of(context).size.height * 0.04),
+                SizedBox(height: MediaQuery.of(context).size.height * 0.04),
 
                 // password control text
                 Text(
-                  "PASSWORD CONTROL", 
+                  "PASSWORD CONTROL",
                   style: TextStyle(
-                      fontSize: 20,
-                      fontWeight: FontWeight.w500,
-                      letterSpacing: 1.4,
-                      color: Color(0xFF3d8dff),
-                    ),
+                    fontSize: 20,
+                    fontWeight: FontWeight.w500,
+                    letterSpacing: 1.4,
+                    color: Color(0xFF3d8dff),
+                  ),
                 ),
 
                 SizedBox(height: MediaQuery.of(context).size.height * 0.01),
@@ -226,7 +237,9 @@ class _SignUpPageState extends State<SignUpPage> {
                   child: Container(
                     decoration: BoxDecoration(
                       color: Color(0xFFececec),
-                      border: Border.all(color: Color.fromARGB(255, 115, 115, 115)),
+                      border: Border.all(
+                        color: Color.fromARGB(255, 115, 115, 115),
+                      ),
                       borderRadius: BorderRadius.circular(12),
                     ),
                     height: MediaQuery.of(context).size.height * 0.055,
@@ -241,7 +254,7 @@ class _SignUpPageState extends State<SignUpPage> {
                           letterSpacing: 1.4,
                           color: const Color.fromARGB(255, 115, 115, 115),
                         ),
-                      contentPadding: EdgeInsets.symmetric(vertical: 12.0),
+                        contentPadding: EdgeInsets.symmetric(vertical: 12.0),
                       ),
                     ),
                   ),
@@ -251,7 +264,7 @@ class _SignUpPageState extends State<SignUpPage> {
 
                 // sign up button
                 Padding(
-                    padding: const EdgeInsets.symmetric(horizontal: 28.0),
+                  padding: const EdgeInsets.symmetric(horizontal: 28.0),
                   child: ElevatedButton(
                     onPressed: () {
                       _tryRegister();
@@ -268,9 +281,9 @@ class _SignUpPageState extends State<SignUpPage> {
                         "Sign Up",
                         style: TextStyle(
                           color: Colors.white, // Yazı rengi beyaz
-                            fontWeight: FontWeight.w700,
-                            fontSize: 30,
-                            letterSpacing: 1.2,
+                          fontWeight: FontWeight.w700,
+                          fontSize: 30,
+                          letterSpacing: 1.2,
                         ),
                       ),
                     ),
