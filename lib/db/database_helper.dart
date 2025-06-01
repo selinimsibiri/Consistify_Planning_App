@@ -213,14 +213,31 @@ class DatabaseHelper {
     await db.insert('categories', {'name': 'accs', 'icon_path': 'assets/category_icons/accs.png'}); //7
     await db.insert('categories', {'name': 'hat', 'icon_path': 'assets/category_icons/hat.png'}); //8
 
-  // Insert Shop Items
-    await db.insert('shop_items', {'name': 'body1', 'category_id': 1, 'price': 5});
-    await db.insert('shop_items', {'name': 'body2', 'category_id': 1, 'price': 10});
-    await db.insert('shop_items', {'name': 'body3', 'category_id': 1, 'price': 10});
-    await db.insert('shop_items', {'name': 'body4', 'category_id': 1, 'price': 10});
-    await db.insert('shop_items', {'name': 'body5', 'category_id': 1, 'price': 10});
-    await db.insert('shop_items', {'name': 'body6', 'category_id': 1, 'price': 10});
-    await db.insert('shop_items', {'name': 'body7', 'category_id': 1, 'price': 10});
+  // Insert Shop Items - BODY (category_id: 1)
+  await db.insert('shop_items', {'name': 'body1', 'category_id': 1, 'price': 5});
+  await db.insert('shop_items', {'name': 'body2', 'category_id': 1, 'price': 10});
+  await db.insert('shop_items', {'name': 'body3', 'category_id': 1, 'price': 10});
+  await db.insert('shop_items', {'name': 'body4', 'category_id': 1, 'price': 10});
+  await db.insert('shop_items', {'name': 'body5', 'category_id': 1, 'price': 10});
+  await db.insert('shop_items', {'name': 'body6', 'category_id': 1, 'price': 10});
+  await db.insert('shop_items', {'name': 'body7', 'category_id': 1, 'price': 10});
+
+  // Insert Shop Items - EYES (category_id: 2) ⭐ BU KISIM EKSİKTİ!
+  await db.insert('shop_items', {'name': 'eyes1', 'category_id': 2, 'price': 5});
+  await db.insert('shop_items', {'name': 'eyes2', 'category_id': 2, 'price': 10});
+  await db.insert('shop_items', {'name': 'eyes3', 'category_id': 2, 'price': 10});
+  await db.insert('shop_items', {'name': 'eyes4', 'category_id': 2, 'price': 10});
+  await db.insert('shop_items', {'name': 'eyes5', 'category_id': 2, 'price': 10});
+  await db.insert('shop_items', {'name': 'eyes6', 'category_id': 2, 'price': 10});
+  await db.insert('shop_items', {'name': 'eyes7', 'category_id': 2, 'price': 10});
+  // Kaç tane eyes dosyanız varsa o kadar ekleyin
+
+  // Diğer kategoriler için de ekleyebilirsiniz:
+  // MOUTH (category_id: 3)
+  // await db.insert('shop_items', {'name': 'mouth1', 'category_id': 3, 'price': 5});
+  
+  // HAIR (category_id: 4)
+  // await db.insert('shop_items', {'name': 'hair1', 'category_id': 4, 'price': 5});
 
     print("✅ Initial data inserted!");
   }
@@ -262,9 +279,9 @@ class DatabaseHelper {
     final db = await _initDB('todo_app.db'); // Veritabanını başlat
     final tables = await getAllTables(db);   // Tüm tabloları al
     print('Veritabanındaki Tablolar:');
-    tables.forEach((table) {
+    for (var table in tables) {
       print(table);  // Tabloların adlarını yazdır
-    });
+    }
   }
 
 

@@ -1,13 +1,56 @@
 import 'package:flutter/material.dart';
 import 'package:sayfa_yonlendirme/screens/market_section.dart';
+import 'package:sayfa_yonlendirme/db/database_helper.dart';
 
-class ProfileScreen extends StatelessWidget {
+class ProfileScreen extends StatefulWidget {
   const ProfileScreen({super.key});
+
+  @override
+  State<ProfileScreen> createState() => _ProfileScreenState();
+}
+
+class _ProfileScreenState extends State<ProfileScreen> {
+  Map<String, String> selectedItems = {}; // 🔹 kategori adı: görsel yolu
+
+  // 🧩 Uygulama açıldığında DB'den seçilen itemları yükle
+  @override
+  void initState() {
+    super.initState();
+    _loadSelectedItems();
+  }
+
+  Future<void> _loadSelectedItems() async {
+    final db = await DatabaseHelper.instance.database;
+
+    final result = await db.rawQuery('''
+      SELECT si.name, si.category_id, c.name as category_name
+      FROM user_selected_items usi
+      JOIN shop_items si ON usi.item_id = si.id
+      JOIN categories c ON si.category_id = c.id
+    ''');
+
+    Map<String, String> loadedItems = {};
+    for (var row in result) {
+      String category = row['category_name'] as String;
+      String itemName = row['name'] as String;
+      loadedItems[category] = 'assets/items/$category/$itemName.png';
+    }
+
+    setState(() {
+      selectedItems = loadedItems;
+    });
+  }
+
+  void updateSelectedItem(String category, String imagePath) {
+    setState(() {
+      selectedItems[category] = imagePath;
+    });
+  }
 
   @override
   Widget build(BuildContext context) {
     return Scaffold(
-      backgroundColor: Colors.grey[100], // hafif arka plan rengi
+      backgroundColor: Color(0x404040),
       body: SafeArea(
         child: Column(
           children: [
@@ -36,25 +79,25 @@ class ProfileScreen extends StatelessWidget {
                       decoration: BoxDecoration(
                         color: Colors.grey[200],
                         borderRadius: BorderRadius.circular(16), // İstersen kenarlar yumuşak
-                        border: Border.all(color: Colors.black12),
+                        border: Border.all(color: Color(0xececec)),
                       ),
-                      child: Stack(
-                        alignment: Alignment.center,
-                        children: [
-                          Image.asset('assets/images/p1.png'),
-                          Image.asset('assets/images/p2.png'),
-                          Image.asset('assets/images/p3.png'),
-                          Image.asset('assets/images/p4.png'),
-                          // Gerekirse daha fazla layer eklenebilir
-                        ],
-                      ),
+                     child: Stack(
+                      alignment: Alignment.center,
+                      children: selectedItems.entries.map((entry) {
+                        return Image.asset(
+                          entry.value,
+                          fit: BoxFit.contain,
+                          height: 200,
+                        );
+                      }).toList(),
+                    ),
+
                     ),
                   ),
                   // Market Alanı: Şimdilik placeholder
                   Expanded(
-                    child: Padding(
-                      padding: const EdgeInsets.all(8.0),
-                      child: MarketSection(),
+                    child: MarketSection(
+                      onItemSelected: updateSelectedItem,
                     ),
                   ),
                 ],

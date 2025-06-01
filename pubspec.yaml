@@ -66,6 +66,7 @@ flutter:
     - assets/category_icons/
     - assets/items/
     - assets/items/body/
+    - assets/items/eyes/
 
   # An image asset can refer to one or more resolution-specific "variants", see
   # https://flutter.dev/to/resolution-aware-images
