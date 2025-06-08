@@ -3,7 +3,6 @@ import 'dart:convert';
 import 'package:crypto/crypto.dart';
 import 'package:flutter/material.dart';
 import 'package:sayfa_yonlendirme/db/database_helper.dart';
-import 'package:sayfa_yonlendirme/screens/market_section.dart';
 import 'package:sayfa_yonlendirme/screens/profile_screen.dart';
 import 'package:sayfa_yonlendirme/screens/signup_page.dart';
 
@@ -32,7 +31,9 @@ class _LogInPageState extends State<LogInPage> {
 
     if (user != null) {
       print("\n***\nHoş geldin ${user.username} 🧜‍♀️\nusername: ${user.username}\nemail: ${user.email}\nhash: ${user.passwordHash}\n***\n");
-      
+
+      await DatabaseHelper.instance.generateDailyTasksForUser(user.id!);
+
       // MarketSection yerine ProfileScreen'e yönlendir ve userId gönder:
       Navigator.pushReplacement(
         context,
