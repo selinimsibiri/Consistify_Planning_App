@@ -2,26 +2,26 @@ import 'package:flutter/material.dart';
 import 'package:sayfa_yonlendirme/db/database_helper.dart';
 
 class MarketSection extends StatefulWidget {
-  final void Function(String category, String imagePath)? onItemSelected; // 🔄 Callback!
+  final int userId; 
+  final void Function(String category, String imagePath)? onItemSelected;
 
-  const MarketSection({super.key, this.onItemSelected}); // 🔗 Constructor'da ekledik
+  const MarketSection({Key? key, required this.userId, this.onItemSelected}) : super(key: key);
 
   @override
   _MarketSectionState createState() => _MarketSectionState();
 }
 
-
 class _MarketSectionState extends State<MarketSection> {
   Map<String, String> selectedItems = {};
-  int userId = 1; //bu sabit verilmiş bunu kullanıcı kaydıyla giriş yapılınca dinamik ayarlamak lazım
+  late int userId;
 
   @override
   void initState() {
     super.initState();
-    _loadUserSelectedItems(); // Karakter kombinasyonu yükleniyor 🎨
+    userId = widget.userId;
+    _loadUserSelectedItems();
   }
 
-  // 🔹 Kategoriler: name ve icon path
   List<Map<String, String>> categories = [
     {'name': 'body', 'icon': 'assets/category_icons/body.png'},
     {'name': 'eyes', 'icon': 'assets/category_icons/eyes.png'},
@@ -67,8 +67,8 @@ class _MarketSectionState extends State<MarketSection> {
         selectedItems[category] = 'assets/items/$category/$itemName.png';
       }
     });
-  }  
-  
+  }
+
   Future<List<Map<String, dynamic>>> getItemsForSelectedCategory() async {
     final db = await DatabaseHelper.instance.database;
 
@@ -79,133 +79,160 @@ class _MarketSectionState extends State<MarketSection> {
     );
   }
 
- @override
+  @override
   Widget build(BuildContext context) {
-    return Column(
-      crossAxisAlignment: CrossAxisAlignment.start,
-      children: [
-        // 🔧 Kategori Icon Row'u - Optimize edildi
-        Container(
-          height: 60, // 70'den 60'a düşürdük
-          margin: EdgeInsets.symmetric(vertical: 8),
-          child: ListView.builder(
-            scrollDirection: Axis.horizontal,
-            itemCount: categories.length,
-            itemBuilder: (context, index) {
-              final cat = categories[index];
-              final isSelected = cat['name'] == selectedCategory;
+    return Container(
+      decoration: BoxDecoration(
+        color: Color(0xFF404040), // Koyu gri arkaplan
+        borderRadius: BorderRadius.only(
+          topLeft: Radius.circular(20),
+          topRight: Radius.circular(20),
+        ),
+      ),
+      child: Column(
+        crossAxisAlignment: CrossAxisAlignment.start,
+        children: [
+          SizedBox(height: 16),
+          
+          // 🎯 Kategori Butonları
+          Container(
+            height: 60,
+            margin: EdgeInsets.symmetric(vertical: 8),
+            child: ListView.builder(
+              scrollDirection: Axis.horizontal,
+              itemCount: categories.length,
+              itemBuilder: (context, index) {
+                final cat = categories[index];
+                final isSelected = cat['name'] == selectedCategory;
 
-              return Container(
-                margin: EdgeInsets.only(
-                  left: index == 0 ? 16 : 4, // İlk item için 16, diğerleri için 4
-                  right: index == categories.length - 1 ? 16 : 4, // Son item için 16, diğerleri için 4
-                ),
-                child: GestureDetector(
-                  onTap: () {
-                    setState(() {
-                      selectedCategory = cat['name']!;
-                    });
-                  },
-                  child: Container(
-                    width: 50, // 60'dan 50'ye düşürdük
-                    height: 50, // 60'dan 50'ye düşürdük
-                    decoration: BoxDecoration(
-                      color: isSelected ? Color.fromARGB(255, 168, 119, 119) : Color(0xFF8f8e8e),
-                      borderRadius: BorderRadius.circular(12),
-                      border: Border.all(
-                        color: isSelected ? Colors.white : Colors.transparent,
-                        width: 2,
+                return Container(
+                  margin: EdgeInsets.only(
+                    left: index == 0 ? 16 : 4,
+                    right: index == categories.length - 1 ? 16 : 4,
+                  ),
+                  child: GestureDetector(
+                    onTap: () {
+                      setState(() {
+                        selectedCategory = cat['name']!;
+                      });
+                    },
+                    child: Container(
+                      width: 50,
+                      height: 50,
+                      decoration: BoxDecoration(
+                        color: isSelected 
+                            ? Color(0xFF8B5CF6) // Mor (seçili)
+                            : Color(0xFF6B6B6B), // Gri (seçili değil)
+                        borderRadius: BorderRadius.circular(12),
+                        border: Border.all(
+                          color: isSelected 
+                              ? Color(0xFF7C3AED) // Koyu mor border
+                              : Colors.transparent,
+                          width: 2,
+                        ),
+                      ),
+                      padding: const EdgeInsets.all(6),
+                      child: Image.asset(
+                        cat['icon']!,
+                        fit: BoxFit.contain,
+                        color: Colors.white, // Icon beyaz
                       ),
                     ),
-                    padding: const EdgeInsets.all(6), // 8'den 6'ya düşürdük
-                    child: Image.asset(cat['icon']!, fit: BoxFit.contain),
                   ),
-                ),
-              );
-            },
-          ),
-        ),
-
-        SizedBox(height: 12), // 16'dan 12'ye düşürdük
-
-        // Grid bölümü aynı kalabilir
-        Expanded(
-          child: Padding(
-            padding: const EdgeInsets.symmetric(horizontal: 16),
-            child: FutureBuilder<List<Map<String, dynamic>>>(
-              future: getItemsForSelectedCategory(),
-              builder: (context, snapshot) {
-                if (snapshot.connectionState == ConnectionState.waiting) {
-                  return Center(child: CircularProgressIndicator());
-                }
-                if (!snapshot.hasData || snapshot.data!.isEmpty) {
-                  return Center(child: Text("Bu kategoriye ait item bulunamadı."));
-                }
-
-                final items = snapshot.data!;
-
-                return GridView.builder(
-                  shrinkWrap: true,
-                  physics: BouncingScrollPhysics(),
-                  itemCount: items.length,
-                  gridDelegate: SliverGridDelegateWithFixedCrossAxisCount(
-                    crossAxisCount: 4,
-                    mainAxisSpacing: 16,
-                    crossAxisSpacing: 16,
-                  ),
-                  itemBuilder: (context, index) {
-                    final item = items[index];
-                    String imagePath = 'assets/items/$selectedCategory/${item['name']}.png';
-
-                    return GestureDetector(
-                      onTap: () async {
-                        final db = await DatabaseHelper.instance.database;
-
-                        await db.delete(
-                          'user_selected_items',
-                          where: 'user_id = ? AND item_id IN (SELECT id FROM shop_items WHERE category_id = ?)',
-                          whereArgs: [userId, categoryIds[selectedCategory]],
-                        );
-
-                        await db.insert('user_selected_items', {
-                          'user_id': userId,
-                          'item_id': item['id'],
-                        });
-
-                        if (widget.onItemSelected != null) {
-                          widget.onItemSelected!(selectedCategory, imagePath);
-                        }
-
-                        setState(() {
-                          selectedItems[selectedCategory] = imagePath;
-                        });
-                      },
-                      child: Container(
-                        decoration: BoxDecoration(
-                          color: Colors.grey[900],
-                          borderRadius: BorderRadius.circular(12),
-                          border: Border.all(
-                            color: selectedItems[selectedCategory] == imagePath
-                                ? Colors.blueAccent
-                                : Colors.transparent,
-                            width: 2,
-                          ),
-                        ),
-                        padding: const EdgeInsets.all(8),
-                        child: Image.asset(
-                          imagePath,
-                          fit: BoxFit.cover,
-                        ),
-                      ),
-                    );
-                  },
                 );
               },
             ),
           ),
-        ),
-      ],
+
+          SizedBox(height: 12),
+
+          // 🎯 Grid Items
+          Expanded(
+            child: Padding(
+              padding: const EdgeInsets.symmetric(horizontal: 16),
+              child: FutureBuilder<List<Map<String, dynamic>>>(
+                future: getItemsForSelectedCategory(),
+                builder: (context, snapshot) {
+                  if (snapshot.connectionState == ConnectionState.waiting) {
+                    return Center(
+                      child: CircularProgressIndicator(
+                        color: Color(0xFF8B5CF6),
+                      ),
+                    );
+                  }
+                  if (!snapshot.hasData || snapshot.data!.isEmpty) {
+                    return Center(
+                      child: Text(
+                        "Bu kategoriye ait item bulunamadı.",
+                        style: TextStyle(color: Colors.white70),
+                      ),
+                    );
+                  }
+
+                  final items = snapshot.data!;
+
+                  return GridView.builder(
+                    shrinkWrap: true,
+                    physics: BouncingScrollPhysics(),
+                    itemCount: items.length,
+                    gridDelegate: SliverGridDelegateWithFixedCrossAxisCount(
+                      crossAxisCount: 4,
+                      mainAxisSpacing: 12,
+                      crossAxisSpacing: 12,
+                    ),
+                    itemBuilder: (context, index) {
+                      final item = items[index];
+                      String imagePath = 'assets/items/$selectedCategory/${item['name']}.png';
+
+                      return GestureDetector(
+                        onTap: () async {
+                          final db = await DatabaseHelper.instance.database;
+
+                          await db.delete(
+                            'user_selected_items',
+                            where: 'user_id = ? AND item_id IN (SELECT id FROM shop_items WHERE category_id = ?)',
+                            whereArgs: [userId, categoryIds[selectedCategory]],
+                          );
+
+                          await db.insert('user_selected_items', {
+                            'user_id': userId,
+                            'item_id': item['id'],
+                          });
+
+                          if (widget.onItemSelected != null) {
+                            widget.onItemSelected!(selectedCategory, imagePath);
+                          }
+
+                          setState(() {
+                            selectedItems[selectedCategory] = imagePath;
+                          });
+                        },
+                        child: Container(
+                          decoration: BoxDecoration(
+                            color: Color(0xFF6B6B6B), // Gri arkaplan
+                            borderRadius: BorderRadius.circular(12),
+                            border: Border.all(
+                              color: selectedItems[selectedCategory] == imagePath
+                                  ? Color(0xFF8B5CF6) // Mor border (seçili)
+                                  : Colors.transparent,
+                              width: 3,
+                            ),
+                          ),
+                          padding: const EdgeInsets.all(8),
+                          child: Image.asset(
+                            imagePath,
+                            fit: BoxFit.cover,
+                          ),
+                        ),
+                      );
+                    },
+                  );
+                },
+              ),
+            ),
+          ),
+        ],
+      ),
     );
   }
-
 }

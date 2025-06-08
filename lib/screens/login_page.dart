@@ -3,6 +3,7 @@ import 'dart:convert';
 import 'package:crypto/crypto.dart';
 import 'package:flutter/material.dart';
 import 'package:sayfa_yonlendirme/db/database_helper.dart';
+import 'package:sayfa_yonlendirme/screens/market_section.dart';
 import 'package:sayfa_yonlendirme/screens/profile_screen.dart';
 import 'package:sayfa_yonlendirme/screens/signup_page.dart';
 
@@ -18,25 +19,40 @@ class _LogInPageState extends State<LogInPage> {
   final TextEditingController _passwordController = TextEditingController();
 
   List<String> columns = [];
-
+  
   void _tryLogin() async {
     final email = _emailController.text;
     final password = _passwordController.text;
 
     final hash = sha256.convert(utf8.encode(password)).toString();
 
-    print("Giriş yapılan email: $email, hash: $hash"); // Debugging: Giriş yapılan email ve hash
+    print("Giriş yapılan email: $email, hash: $hash");
 
     final user = await DatabaseHelper.instance.loginUser(email, hash);
 
     if (user != null) {
       print("\n***\nHoş geldin ${user.username} 🧜‍♀️\nusername: ${user.username}\nemail: ${user.email}\nhash: ${user.passwordHash}\n***\n");
-      // Ana ekrana ya da diğer sayfaya yönlendir
+      
+      // MarketSection yerine ProfileScreen'e yönlendir ve userId gönder:
+      Navigator.pushReplacement(
+        context,
+        MaterialPageRoute(
+          builder: (context) => ProfileScreen(userId: user.id!), // userId'yi ProfileScreen'e gönder
+        ),
+      );
+      
     } else {
-      print("\n***\n❌ Giriş başarısız!\n***\nusername: ${user?.username}\nemail: ${user?.email}\nhash: ${user?.passwordHash}\n***\n");
-      // Hata mesajı göster
+      print("\n***\n❌ Giriş başarısız!\n***\n");
+      
+      ScaffoldMessenger.of(context).showSnackBar(
+        SnackBar(
+          content: Text('Giriş başarısız! Email veya şifre hatalı.'),
+          backgroundColor: Colors.red,
+        ),
+      );
     }
   }
+
 
 
   Future<void> fetchColumns() async {
@@ -179,12 +195,12 @@ class _LogInPageState extends State<LogInPage> {
                     child: InkWell(
                       onTap: () {
                         // yönlendirme
-                        Navigator.push(
-                          context,
-                          MaterialPageRoute(
-                            builder: (context) => ProfileScreen(),
-                          ),
-                        );
+                        // Navigator.push(
+                        //   context,
+                        //   MaterialPageRoute(
+                        //     builder: (context) => ProfileScreen(userId: null,),
+                        //   ),
+                        // );
                       },
                       child:
                        Text(

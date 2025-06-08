@@ -1,21 +1,37 @@
 import 'package:flutter/material.dart';
+import 'package:sayfa_yonlendirme/screens/login_page.dart';
 import 'package:sayfa_yonlendirme/screens/market_section.dart';
 import 'package:sayfa_yonlendirme/db/database_helper.dart';
 
 class ProfileScreen extends StatefulWidget {
-  const ProfileScreen({super.key});
+  final int userId;
+  const ProfileScreen({super.key, required this.userId});
 
   @override
   State<ProfileScreen> createState() => _ProfileScreenState();
 }
 
 class _ProfileScreenState extends State<ProfileScreen> {
-  Map<String, String> selectedItems = {}; // 🔹 kategori adı: görsel yolu
+  late int userId;
+  Map<String, String> selectedItems = {};
 
-  // 🧩 Uygulama açıldığında DB'den seçilen itemları yükle
+  // Katman sıralamasını
+  final List<String> layerOrder = [
+    'body',    // En arkada
+    'shoes',   // Ayakkabı
+    'bottom',  // Pantolon/etek
+    'top',     // Üst giyim
+    'mouth',   // Ağız
+    'eyes',    // Gözler
+    'hair',    // Saç
+    'accs',    // Aksesuar
+    'hat',     // Şapka (en önde)
+  ];
+
   @override
   void initState() {
     super.initState();
+    userId = widget.userId;
     _loadSelectedItems();
   }
 
@@ -27,7 +43,8 @@ class _ProfileScreenState extends State<ProfileScreen> {
       FROM user_selected_items usi
       JOIN shop_items si ON usi.item_id = si.id
       JOIN categories c ON si.category_id = c.id
-    ''');
+      WHERE usi.user_id = ?
+    ''', [userId]);
 
     Map<String, String> loadedItems = {};
     for (var row in result) {
@@ -50,83 +67,161 @@ class _ProfileScreenState extends State<ProfileScreen> {
   @override
   Widget build(BuildContext context) {
     return Scaffold(
-      backgroundColor: Color(0x404040),
+      backgroundColor: Color(0xFF2D2D2D), // Koyu gri arkaplan
       body: SafeArea(
         child: Column(
           children: [
-            // Üst: Başlık
-            Padding(
-              padding: const EdgeInsets.all(16.0),
-              child: Text(
-                "Profile",
-                style: TextStyle(
-                  fontSize: 28,
-                  fontWeight: FontWeight.bold,
+            // 🎯 Üst Bar - Mor gradient
+            Container(
+              width: double.infinity,
+              height: 80,
+              decoration: BoxDecoration(
+                gradient: LinearGradient(
+                  colors: [
+                    Color(0xFF8B5CF6), // Mor
+                    Color(0xFF7C3AED), // Koyu mor
+                  ],
+                  begin: Alignment.topLeft,
+                  end: Alignment.bottomRight,
+                ),
+              ),
+              child: Padding(
+                padding: EdgeInsets.symmetric(horizontal: 16, vertical: 8),
+                child: Row(
+                  children: [
+                    // Settings icon
+                    GestureDetector(
+                      onTap: () {
+                        _showLogoutDialog();
+                      },
+                      child: Container(
+                        width: 40,
+                        height: 40,
+                        decoration: BoxDecoration(
+                          color: Colors.white.withOpacity(0.2),
+                          borderRadius: BorderRadius.circular(8),
+                        ),
+                        child: Icon(
+                          Icons.settings,
+                          color: Colors.white,
+                          size: 20,
+                        ),
+                      ),
+                    ),
+                    
+                    Spacer(),
+                    
+                    // Profile text
+                    Text(
+                      "PROFILE",
+                      style: TextStyle(
+                        fontSize: 24,
+                        fontWeight: FontWeight.bold,
+                        color: Colors.white,
+                        letterSpacing: 1.2,
+                      ),
+                    ),
+                    
+                    Spacer(),
+                    
+                    // Level & Coins
+                    Column(
+                      mainAxisAlignment: MainAxisAlignment.center,
+                      crossAxisAlignment: CrossAxisAlignment.end,
+                      children: [
+                        Text(
+                          "13 🔥",
+                          style: TextStyle(
+                            fontSize: 18,
+                            fontWeight: FontWeight.bold,
+                            color: Colors.white,
+                          ),
+                        ),
+                        Row(
+                          children: [
+                            Text(
+                              "💰 256",
+                              style: TextStyle(
+                                fontSize: 14,
+                                color: Colors.yellow[300],
+                                fontWeight: FontWeight.w600,
+                              ),
+                            ),
+                          ],
+                        ),
+                      ],
+                    ),
+                  ],
                 ),
               ),
             ),
 
-            // Orta: Karakter ve Market Alanı
-            Expanded(
-              child: Column(
-                children: [
-                  // Karakter Görseli
-                  Padding(
-                    padding: const EdgeInsets.only(top: 16.0, bottom: 16),
-                    child: Container(
-                      width: 400, // Genişliği isteğine göre ayarla
-                      height: 220, // Yüksekliği isteğine göre ayarla
-                      decoration: BoxDecoration(
-                        color: Colors.grey[200],
-                        borderRadius: BorderRadius.circular(16), // İstersen kenarlar yumuşak
-                        border: Border.all(color: Color(0xececec)),
-                      ),
-                     child: Stack(
-                      alignment: Alignment.center,
-                      children: selectedItems.entries.map((entry) {
-                        return Image.asset(
-                          entry.value,
-                          fit: BoxFit.contain,
-                          height: 200,
-                        );
+             // 🎯 Karakter Görseli - Düzeltilmiş katman sıralaması
+              Padding(
+                padding: const EdgeInsets.all(16.0),
+                child: Container(
+                  width: double.infinity,
+                  height: 200,
+                  decoration: BoxDecoration(
+                    color: Color(0xFFF5F5F5),
+                    borderRadius: BorderRadius.circular(16),
+                    border: Border.all(
+                      color: Color(0xFFE0E0E0),
+                      width: 2,
+                    ),
+                  ),
+                  child: Stack(
+                    alignment: Alignment.center,
+                    children: [
+                      // ✅ Katmanları sabit sırayla göster
+                      ...layerOrder.map((category) {
+                        if (selectedItems.containsKey(category)) {
+                          return Image.asset(
+                            selectedItems[category]!,
+                            fit: BoxFit.contain,
+                            height: 180,
+                          );
+                        }
+                        return SizedBox.shrink(); // Boş widget
                       }).toList(),
-                    ),
+                    ],
+                  ),
+                ),
+              ),
 
-                    ),
-                  ),
-                  // Market Alanı: Şimdilik placeholder
-                  Expanded(
-                    child: MarketSection(
-                      onItemSelected: updateSelectedItem,
-                    ),
-                  ),
-                ],
+            // 🎯 Market Alanı
+            Expanded(
+              child: MarketSection(
+                onItemSelected: updateSelectedItem, userId: userId,
               ),
             ),
 
-            // Alt: Sayfa geçiş butonları
-            Padding(
-              padding: const EdgeInsets.all(16.0),
+            // 🎯 Alt Navigation Bar - Renkli butonlar
+            Container(
+              height: 80,
+              color: Color(0xFF2D2D2D),
               child: Row(
-                mainAxisAlignment: MainAxisAlignment.spaceAround,
+                mainAxisAlignment: MainAxisAlignment.spaceEvenly,
                 children: [
-                  IconButton(
-                    icon: Icon(Icons.home),
-                    onPressed: () {
-                      // Ana sayfaya git
-                    },
+                  _buildNavButton(
+                    icon: Icons.check_circle,
+                    color: Color(0xFF8B5CF6), // Mor
+                    onTap: () {},
                   ),
-                  IconButton(
-                    icon: Icon(Icons.person),
-                    onPressed: () {
-                      // Profil sayfasındayız zaten
-                    },
+                  _buildNavButton(
+                    icon: Icons.assignment,
+                    color: Color(0xFF06B6D4), // Cyan
+                    onTap: () {},
                   ),
-                  IconButton(
-                    icon: Icon(Icons.settings),
-                    onPressed: () {
-                      // Ayarlar sayfasına git
-                    },
+                  _buildNavButton(
+                    icon: Icons.home,
+                    color: Color(0xFFF59E0B), // Turuncu
+                    onTap: () {},
+                  ),
+                  _buildNavButton(
+                    icon: Icons.trending_up,
+                    color: Color(0xFFEC4899), // Pembe
+                    onTap: () {},
                   ),
                 ],
               ),
@@ -134,6 +229,65 @@ class _ProfileScreenState extends State<ProfileScreen> {
           ],
         ),
       ),
+    );
+  }
+
+  Widget _buildNavButton({
+    required IconData icon,
+    required Color color,
+    required VoidCallback onTap,
+  }) {
+    return GestureDetector(
+      onTap: onTap,
+      child: Container(
+        width: 60,
+        height: 60,
+        decoration: BoxDecoration(
+          color: color,
+          borderRadius: BorderRadius.circular(12),
+        ),
+        child: Icon(
+          icon,
+          color: Colors.white,
+          size: 28,
+        ),
+      ),
+    );
+  }
+
+  void _showLogoutDialog() {
+    showDialog(
+      context: context,
+      builder: (BuildContext context) {
+        return AlertDialog(
+          title: Text('Çıkış Yap'),
+          content: Text('Hesabınızdan çıkış yapmak istediğinizden emin misiniz?'),
+          actions: [
+            TextButton(
+              onPressed: () {
+                Navigator.of(context).pop(); // Dialog'u kapat
+              },
+              child: Text('İptal'),
+            ),
+            TextButton(
+              onPressed: () {
+                Navigator.of(context).pop(); // Dialog'u kapat
+                _logout(); // Çıkış yap
+              },
+              child: Text('Çıkış Yap'),
+            ),
+          ],
+        );
+      },
+    );
+  }
+
+  void _logout() {
+    // Tüm ekranları temizleyip login sayfasına git
+    Navigator.pushAndRemoveUntil(
+      context,
+      MaterialPageRoute(builder: (context) => LogInPage()),
+      (route) => false, // Tüm önceki route'ları temizle
     );
   }
 }

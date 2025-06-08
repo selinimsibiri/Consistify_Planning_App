@@ -222,7 +222,7 @@ class DatabaseHelper {
   await db.insert('shop_items', {'name': 'body6', 'category_id': 1, 'price': 10});
   await db.insert('shop_items', {'name': 'body7', 'category_id': 1, 'price': 10});
 
-  // Insert Shop Items - EYES (category_id: 2) ⭐ BU KISIM EKSİKTİ!
+  // Insert Shop Items - EYES (category_id: 2) ⭐
   await db.insert('shop_items', {'name': 'eyes1', 'category_id': 2, 'price': 5});
   await db.insert('shop_items', {'name': 'eyes2', 'category_id': 2, 'price': 10});
   await db.insert('shop_items', {'name': 'eyes3', 'category_id': 2, 'price': 10});
@@ -230,12 +230,21 @@ class DatabaseHelper {
   await db.insert('shop_items', {'name': 'eyes5', 'category_id': 2, 'price': 10});
   await db.insert('shop_items', {'name': 'eyes6', 'category_id': 2, 'price': 10});
   await db.insert('shop_items', {'name': 'eyes7', 'category_id': 2, 'price': 10});
-  // Kaç tane eyes dosyanız varsa o kadar ekleyin
 
-  // Diğer kategoriler için de ekleyebilirsiniz:
-  // MOUTH (category_id: 3)
-  // await db.insert('shop_items', {'name': 'mouth1', 'category_id': 3, 'price': 5});
-  
+  // Insert Shop Items - HAIR (category_id: 4) ⭐
+  await db.insert('shop_items', {'name': 'hair1', 'category_id': 4, 'price': 5});
+  await db.insert('shop_items', {'name': 'hair2', 'category_id': 4, 'price': 10});
+  await db.insert('shop_items', {'name': 'hair3', 'category_id': 4, 'price': 10});
+  await db.insert('shop_items', {'name': 'hair4', 'category_id': 4, 'price': 10});
+  await db.insert('shop_items', {'name': 'hair5', 'category_id': 4, 'price': 10});
+  await db.insert('shop_items', {'name': 'hair6', 'category_id': 4, 'price': 10});
+  await db.insert('shop_items', {'name': 'hair7', 'category_id': 4, 'price': 10});
+  await db.insert('shop_items', {'name': 'hair8', 'category_id': 4, 'price': 10});
+  await db.insert('shop_items', {'name': 'hair9', 'category_id': 4, 'price': 10});
+  await db.insert('shop_items', {'name': 'hair10', 'category_id': 4, 'price': 10});
+  await db.insert('shop_items', {'name': 'hair11', 'category_id': 4, 'price': 10});
+  await db.insert('shop_items', {'name': 'hair12', 'category_id': 4, 'price': 10});
+  await db.insert('shop_items', {'name': 'hair13', 'category_id': 4, 'price': 10});
   // HAIR (category_id: 4)
   // await db.insert('shop_items', {'name': 'hair1', 'category_id': 4, 'price': 5});
 

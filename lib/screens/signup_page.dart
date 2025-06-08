@@ -5,6 +5,7 @@ import 'package:flutter/material.dart';
 import 'package:sayfa_yonlendirme/db/database_helper.dart';
 import 'package:sayfa_yonlendirme/models/user.dart';
 import 'package:sayfa_yonlendirme/screens/login_page.dart';
+import 'package:sayfa_yonlendirme/screens/profile_screen.dart';
 
 class SignUpPage extends StatefulWidget {
   const SignUpPage({super.key});
@@ -17,11 +18,28 @@ class _SignUpPageState extends State<SignUpPage> {
   final TextEditingController _usernameController = TextEditingController();
   final TextEditingController _emailController = TextEditingController();
   final TextEditingController _passwordController = TextEditingController();
+  final TextEditingController _passwordConfirmController = TextEditingController();
 
   void _tryRegister() async {
     final username = _usernameController.text;
     final email = _emailController.text;
     final password = _passwordController.text;
+    final passwordConfirm = _passwordConfirmController.text;
+
+    // Validasyonlar
+    if (username.isEmpty || email.isEmpty || password.isEmpty || passwordConfirm.isEmpty) {
+      ScaffoldMessenger.of(context).showSnackBar(
+        SnackBar(content: Text('Lütfen tüm alanları doldurun!')),
+      );
+      return;
+    }
+    
+    if (password != passwordConfirm) {
+      ScaffoldMessenger.of(context).showSnackBar(
+        SnackBar(content: Text('Şifreler eşleşmiyor!')),
+      );
+      return;
+    }
 
     final passwordHash = sha256.convert(utf8.encode(password)).toString();
 
@@ -34,12 +52,23 @@ class _SignUpPageState extends State<SignUpPage> {
     final result = await DatabaseHelper.instance.registerUser(newUser);
 
     if (result == -1) {
-      print("\n***\n❗Bu kullanıcı adı ya da e-posta zaten kayıtlı!\n***\n username: ${newUser.username}\n email: ${newUser.email}\n hash: ${newUser.passwordHash}\n***\n");
+      print("\n***\n❗Bu kullanıcı adı ya da e-posta zaten kayıtlı!\n***\n");
+      ScaffoldMessenger.of(context).showSnackBar(
+        SnackBar(content: Text('Bu kullanıcı adı ya da e-posta zaten kayıtlı!')),
+      );
     } else {
-      print("✅ Kayıt başarılı!\n***\n username: ${newUser.username}\n email: ${newUser.email}\n hash: ${newUser.passwordHash}\n***\n");
-      // Ana ekrana yönlendirme yapılabilir
+      print("✅ Kayıt başarılı! User ID: $result");
+      
+      // Profil ekranına yönlendirme - result değişkeni user ID'dir
+      Navigator.pushReplacement(
+        context,
+        MaterialPageRoute(
+          builder: (context) => ProfileScreen(userId: result),
+        ),
+      );
     }
   }
+
 
   @override
   Widget build(BuildContext context) {
@@ -104,7 +133,7 @@ class _SignUpPageState extends State<SignUpPage> {
                     child: TextField(
                       controller: _usernameController,
                       textAlign: TextAlign.center,
-                      obscureText: true,
+                      obscureText: false,
                       decoration: InputDecoration(
                         border: InputBorder.none,
                         hintText: "Selin Çolak",
@@ -147,7 +176,7 @@ class _SignUpPageState extends State<SignUpPage> {
                     child: TextField(
                       controller: _emailController,
                       textAlign: TextAlign.center,
-                      obscureText: true,
+                      obscureText: false,
                       decoration: InputDecoration(
                         border: InputBorder.none,
                         hintText: "mail@gmail.com",
@@ -231,6 +260,7 @@ class _SignUpPageState extends State<SignUpPage> {
                     ),
                     height: MediaQuery.of(context).size.height * 0.055,
                     child: TextField(
+                      controller: _passwordConfirmController,
                       textAlign: TextAlign.center,
                       obscureText: true,
                       decoration: InputDecoration(
