@@ -1,7 +1,9 @@
 import 'package:flutter/material.dart';
+import 'package:sayfa_yonlendirme/screens/daily_screen.dart';
 import 'package:sayfa_yonlendirme/screens/login_page.dart';
 import 'package:sayfa_yonlendirme/screens/market_section.dart';
 import 'package:sayfa_yonlendirme/db/database_helper.dart';
+import 'package:sayfa_yonlendirme/screens/todo_screen.dart';
 
 class ProfileScreen extends StatefulWidget {
   final int userId;
@@ -206,12 +208,26 @@ class _ProfileScreenState extends State<ProfileScreen> {
                   _buildNavButton(
                     icon: Icons.check_circle,
                     color: Color(0xFF8B5CF6), // Mor
-                    onTap: () {},
+                    onTap: () {
+                      Navigator.push(
+                        context,
+                        MaterialPageRoute(
+                          builder: (context) => TodoScreen(userId: userId),
+                        ),
+                      );
+                    },
                   ),
                   _buildNavButton(
                     icon: Icons.assignment,
-                    color: Color(0xFF06B6D4), // Cyan
-                    onTap: () {},
+                    color: Color(0xFF06B6D4),
+                    onTap: () {
+                      Navigator.push(
+                        context,
+                        MaterialPageRoute(
+                          builder: (context) => DailyScreen(userId: widget.userId),
+                        ),
+                      );
+                    },
                   ),
                   _buildNavButton(
                     icon: Icons.home,
@@ -221,7 +237,26 @@ class _ProfileScreenState extends State<ProfileScreen> {
                   _buildNavButton(
                     icon: Icons.trending_up,
                     color: Color(0xFFEC4899), // Pembe
-                    onTap: () {},
+                    onTap: () async {
+                      try {
+                        await DatabaseHelper.instance.exportDatabaseToJson();
+                        
+                        ScaffoldMessenger.of(context).showSnackBar(
+                          SnackBar(
+                            content: Text('📄 Database JSON\'a export edildi!'),
+                            backgroundColor: Colors.green,
+                            duration: Duration(seconds: 2),
+                          ),
+                        );
+                      } catch (e) {
+                        ScaffoldMessenger.of(context).showSnackBar(
+                          SnackBar(
+                            content: Text('❌ Export hatası: $e'),
+                            backgroundColor: Colors.red,
+                          ),
+                        );
+                      }
+                    },
                   ),
                 ],
               ),
