@@ -183,7 +183,7 @@ class DatabaseHelper {
       conflictAlgorithm: ConflictAlgorithm.replace,
     );
     
-    print("🎯 Yeni kullanıcı kaydedildi! Gerçek ID: $newUserId"); // Debug
+    print("🎯 Yeni kullanıcı kaydedildi! Gerçek ID: $newUserId");
     
     return newUserId;  // ✅ Gerçek kullanıcı ID'sini döndür
   }
