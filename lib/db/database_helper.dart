@@ -1,3 +1,7 @@
+import 'dart:io';
+
+import 'package:flutter/services.dart';
+import 'package:path_provider/path_provider.dart';
 import 'package:sayfa_yonlendirme/models/user.dart';
 import 'package:sqflite/sqflite.dart';
 import 'package:path/path.dart';
@@ -69,6 +73,8 @@ class DatabaseHelper {
           type TEXT NOT NULL CHECK (type IN ('one_time', 'daily')),
           coin_reward INTEGER DEFAULT 5,
           daily_template_id INTEGER,
+          is_active INTEGER DEFAULT 1,
+          is_completed INTEGER DEFAULT 0,
           created_at DATETIME DEFAULT CURRENT_TIMESTAMP,
           FOREIGN KEY (user_id) REFERENCES users (id),
           FOREIGN KEY (daily_template_id) REFERENCES daily_templates (id)
@@ -84,6 +90,7 @@ class DatabaseHelper {
         selected_days TEXT NOT NULL,
         coin_reward INTEGER DEFAULT 5,
         is_active INTEGER DEFAULT 1,
+        last_generated_date TEXT,re
         created_at DATETIME DEFAULT CURRENT_TIMESTAMP,
         FOREIGN KEY (user_id) REFERENCES users (id)
       )
@@ -310,102 +317,241 @@ class DatabaseHelper {
   }
 
   // Genel daily task oluşturma (tüm kullanıcılar için)
-Future<void> generateDailyTasks() async {
-  final db = await database;
-  final today = DateTime.now();
-  final dayOfWeek = today.weekday - 1; // 0=Pazartesi, 6=Pazar
-  final todayString = today.toIso8601String().split('T')[0];
-  
-  print('🎯 Daily task oluşturma başlatıldı - Gün: $dayOfWeek, Tarih: $todayString');
-  
-  // Tüm aktif daily template'leri al
-  final dailyTemplates = await db.query(
-    'daily_templates',
-    where: 'is_active = 1',
-  );
-  
-  print('📋 ${dailyTemplates.length} aktif daily template bulundu');
-  
-  for (var template in dailyTemplates) {
-    String selectedDays = template['selected_days'] as String;
-    List<String> days = selectedDays.split(',');
+  Future<void> generateDailyTasks() async {
+    final db = await database;
+    final today = DateTime.now();
+    final dayOfWeek = today.weekday - 1; // 0=Pazartesi, 6=Pazar
+    final todayString = today.toIso8601String().split('T')[0];
     
-    // Bugün bu daily çalışacak mı?
-    if (dayOfWeek < days.length && days[dayOfWeek] == '1') {
-      // Bugün için bu daily zaten oluşturulmuş mu?
-      final existingTask = await db.query(
-        'tasks',
-        where: 'daily_template_id = ? AND DATE(created_at) = ?',
-        whereArgs: [template['id'], todayString],
-      );
+    print('🎯 Daily task oluşturma başlatıldı - Gün: $dayOfWeek, Tarih: $todayString');
+    
+    // Tüm aktif daily template'leri al
+    final dailyTemplates = await db.query(
+      'daily_templates',
+      where: 'is_active = 1',
+    );
+    
+    print('📋 ${dailyTemplates.length} aktif daily template bulundu');
+    
+    for (var template in dailyTemplates) {
+      String selectedDays = template['selected_days'] as String;
+      List<String> days = selectedDays.split(',');
       
-      if (existingTask.isEmpty) {
-        // Daily task'ı oluştur
-        await db.insert('tasks', {
-          'user_id': template['user_id'],
-          'title': template['title'],
-          'description': template['description'],
-          'type': 'daily',
-          'coin_reward': template['coin_reward'],
-          'daily_template_id': template['id'],
-        });
+      // Bugün bu daily çalışacak mı?
+      if (dayOfWeek < days.length && days[dayOfWeek] == '1') {
+        // Bugün için bu daily zaten oluşturulmuş mu?
+        final existingTask = await db.query(
+          'tasks',
+          where: 'daily_template_id = ? AND DATE(created_at) = ?',
+          whereArgs: [template['id'], todayString],
+        );
         
-        print('✅ Daily task oluşturuldu: ${template['title']} (User: ${template['user_id']})');
-      } else {
-        print('⏭️ Daily task zaten var: ${template['title']}');
+        if (existingTask.isEmpty) {
+          // Daily task'ı oluştur
+          await db.insert('tasks', {
+            'user_id': template['user_id'],
+            'title': template['title'],
+            'description': template['description'],
+            'type': 'daily',
+            'is_active': '1',
+            'coin_reward': template['coin_reward'],
+            'daily_template_id': template['id'],
+          });
+          
+          print('✅ Daily task oluşturuldu: ${template['title']} (User: ${template['user_id']})');
+        } else {
+          print('⏭️ Daily task zaten var: ${template['title']}');
+        }
       }
     }
+  }
+
+  // Belirli bir kullanıcı için daily task oluşturma
+  Future<void> generateDailyTasksForUser(int userId) async {
+    final db = await database;
+    final today = DateTime.now();
+    final dayOfWeek = today.weekday - 1; // 0=Pazartesi, 6=Pazar
+    final todayString = today.toIso8601String().split('T')[0]; // 2025-06-09
+    
+    print('🎯 Kullanıcı $userId için daily task kontrolü başlatıldı - Gün: $dayOfWeek');
+    
+    // Bu kullanıcının aktif daily template'lerini al
+    final dailyTemplates = await db.query(
+      'daily_templates',
+      where: 'user_id = ? AND is_active = 1',
+      whereArgs: [userId],
+    );
+    
+    print('📋 Kullanıcı $userId için ${dailyTemplates.length} aktif daily template bulundu');
+    
+    for (var template in dailyTemplates) {
+      String selectedDays = template['selected_days'] as String;
+      List<String> days = selectedDays.split(',');
+      
+      // Bugün bu daily çalışacak mı?
+      if (dayOfWeek < days.length && days[dayOfWeek] == '1') {
+        // Bugün için bu daily zaten oluşturulmuş mu?
+        String? lastGenerated = template['last_generated_date'] as String?;
+
+        if (lastGenerated != todayString) {
+          // Bugün için bu daily henüz oluşturulmamış
+          
+          // Daily task'ı oluştur
+          await db.insert('tasks', {
+            'user_id': template['user_id'],
+            'title': template['title'],
+            'description': template['description'],
+            'type': 'daily',
+            'is_active': '1',
+            'coin_reward': template['coin_reward'],
+            'daily_template_id': template['id'],
+            'is_completed': 0,
+          });
+          
+          // Daily template'in last_generated_date'ini güncelle
+          await db.update(
+            'daily_templates',
+            {'last_generated_date': todayString},
+            where: 'id = ?',
+            whereArgs: [template['id']],
+          );
+          
+          print('✅ Daily task oluşturuldu: ${template['title']}');
+        } else {
+          print('⏭️ Daily task zaten var: ${template['title']}');
+        }
+      } else {
+        print('📅 Bugün çalışmayan daily: ${template['title']}');
+      }
+    }
+  }
+
+  // 🎯 Daily template silindiğinde ilgili task'ları da sil
+  Future<void> deleteDailyTemplate(int templateId) async {
+    final db = await database;
+    
+    try {
+      await db.transaction((txn) async {
+        // 1. Bu template'den oluşturulan yalnızca tamamlanmamış todo'ları sil
+        await txn.delete(
+          'tasks',
+          where: 'daily_template_id = ? AND is_completed = 0',           
+          whereArgs: [templateId],
+        );
+        
+        // 2. Daily template'i sil
+        await txn.delete(
+          'daily_templates',
+          where: 'id = ?',
+          whereArgs: [templateId],
+        );
+      });
+      
+      print('✅ Daily template ve ilgili tamamlanmamış task\'lar silindi: $templateId');
+    } catch (e) {
+      print('❌ Daily template silme hatası: $e');
+      throw e;
+    }
+  }
+
+  // 🎯 YENİ: Daily edit edilince bugünkü task'ı deaktif et
+  Future<void> deactivateTodayTaskForDaily(int dailyTemplateId, DateTime today) async {
+    final db = await database;
+    
+    try {
+      // Bugünün tarih string'ini oluştur (YYYY-MM-DD formatında)
+      final todayStr = "${today.year}-${today.month.toString().padLeft(2, '0')}-${today.day.toString().padLeft(2, '0')}";
+      
+      // Bu daily'den bugün oluşturulan ve henüz tamamlanmamış task'ı bul ve deaktif et
+      final result = await db.update(
+        'tasks',
+        {'is_active': 0}, // 🎯 Task'ı deaktif et
+        where: '''
+          daily_template_id = ? 
+          AND DATE(created_at) = ? 
+          AND is_completed = 0
+        ''',
+        whereArgs: [dailyTemplateId, todayStr],
+      );
+      
+      if (result > 0) {
+        print('✅ Bugünkü tamamlanmamış task deaktif edildi: $dailyTemplateId');
+      } else {
+        print('ℹ️ Deaktif edilecek task bulunamadı (zaten tamamlanmış olabilir)');
+      }
+    } catch (e) {
+      print('❌ Task deaktif etme hatası: $e');
+      throw e;
+    }
+  }
+
+  Future<void> exportDatabaseToJson() async {
+  try {
+    final db = await database;
+    
+    final users = await db.query('users');
+    final tasks = await db.query('tasks');
+    final dailyTemplates = await db.query('daily_templates');
+    final taskCompletion = await db.query('task_completion');
+    final categories = await db.query('categories');
+    final shopItems = await db.query('shop_items');
+    final userItems = await db.query('user_items');
+    final streaks = await db.query('streaks');
+    final userSelectedItems = await db.query('user_selected_items');
+    
+    final databaseSnapshot = {
+      'export_time': DateTime.now().toString(),
+      'tables': {
+        'users': users,
+        'tasks': tasks,
+        'daily_templates': dailyTemplates,
+        'task_completion': taskCompletion,
+        'categories': categories,
+        'shop_items': shopItems,
+        'user_items': userItems,
+        'streaks': streaks,
+        'user_selected_items': userSelectedItems,
+      },
+      'summary': {
+        'total_users': users.length,
+        'total_tasks': tasks.length,
+        'active_tasks': tasks.where((t) => t['is_active'] == 1).length,
+        'completed_tasks': tasks.where((t) => t['is_completed'] == 1).length,
+        'total_daily_templates': dailyTemplates.length,
+        'active_daily_templates': dailyTemplates.where((dt) => dt['is_active'] == 1).length,
+        'total_completions': taskCompletion.length,
+        'total_categories': categories.length,
+        'total_shop_items': shopItems.length,
+        'total_user_items': userItems.length,
+        'total_streaks': streaks.length,
+        'total_selected_items': userSelectedItems.length,
+      }
+    };
+    
+    final jsonString = JsonEncoder.withIndent('  ').convert(databaseSnapshot);
+    
+    // 🎯 1. Console'a yazdır
+    print('📄 ===== DATABASE JSON START =====');
+    print(jsonString);
+    print('📄 ===== DATABASE JSON END =====');
+    
+    // 🎯 2. Clipboard'a kopyala
+    await Clipboard.setData(ClipboardData(text: jsonString));
+    
+    // 🎯 3. Dosyaya kaydet
+    final directory = await getApplicationDocumentsDirectory();
+    final file = File('${directory.path}/database_snapshot.json');
+    await file.writeAsString(jsonString);
+    
+    print('✅ JSON hazır: Console\'da + Clipboard\'ta + Dosyada');
+    print('📋 Ctrl+V ile VS Code\'a yapıştırabilirsin!');
+    
+  } catch (e) {
+    print('❌ JSON export hatası: $e');
+    rethrow;
   }
 }
 
-// Belirli bir kullanıcı için daily task oluşturma
-Future<void> generateDailyTasksForUser(int userId) async {
-  final db = await database;
-  final today = DateTime.now();
-  final dayOfWeek = today.weekday - 1; // 0=Pazartesi, 6=Pazar
-  final todayString = today.toIso8601String().split('T')[0];
-  
-  print('🎯 Kullanıcı $userId için daily task oluşturma başlatıldı');
-  
-  // Bu kullanıcının aktif daily template'lerini al
-  final dailyTemplates = await db.query(
-    'daily_templates',
-    where: 'user_id = ? AND is_active = 1',
-    whereArgs: [userId],
-  );
-  
-  print('📋 Kullanıcı $userId için ${dailyTemplates.length} aktif daily template bulundu');
-  
-  for (var template in dailyTemplates) {
-    String selectedDays = template['selected_days'] as String;
-    List<String> days = selectedDays.split(',');
-    
-    // Bugün bu daily çalışacak mı?
-    if (dayOfWeek < days.length && days[dayOfWeek] == '1') {
-      // Bugün için bu daily zaten oluşturulmuş mu?
-      final existingTask = await db.query(
-        'tasks',
-        where: 'daily_template_id = ? AND DATE(created_at) = ?',
-        whereArgs: [template['id'], todayString],
-      );
-      
-      if (existingTask.isEmpty) {
-        // Daily task'ı oluştur
-        await db.insert('tasks', {
-          'user_id': template['user_id'],
-          'title': template['title'],
-          'description': template['description'],
-          'type': 'daily',
-          'coin_reward': template['coin_reward'],
-          'daily_template_id': template['id'],
-        });
-        
-        print('✅ Daily task oluşturuldu: ${template['title']}');
-      } else {
-        print('⏭️ Daily task zaten var: ${template['title']}');
-      }
-    }
-  }
-}
+
 
 }

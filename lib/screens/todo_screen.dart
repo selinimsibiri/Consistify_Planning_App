@@ -22,14 +22,22 @@ class _TodoScreenState extends State<TodoScreen> {
   @override
   void initState() {
     super.initState();
-    _loadTasks();
-    _loadUserCoins();
-    _loadCompletedTasks();
+    _initializeTodoScreen();
+  }
+
+  Future<void> _initializeTodoScreen() async {
+    // 1. Önce daily'leri kontrol et ve oluştur
+    await DatabaseHelper.instance.generateDailyTasksForUser(widget.userId);
+    
+    // 2. Sonra task'ları yükle
+    await _loadTasks();
+    await _loadUserCoins();
+    await _loadCompletedTasks();
   }
 
   Future<void> _loadTasks() async {
     final db = await DatabaseHelper.instance.database;
-    
+
     // One-time tasks
     final oneTimeResults = await db.query(
       'tasks',
@@ -45,29 +53,31 @@ class _TodoScreenState extends State<TodoScreen> {
       whereArgs: [widget.userId, 'daily'],
       orderBy: 'id ASC',
     );
-    
     setState(() {
       oneTimeTasks = oneTimeResults;
       dailyTasks = dailyResults;
     });
+    print('📋 Yüklenen görevler: ${oneTimeTasks.length} one-time, ${dailyTasks.length} daily');
   }
 
   Future<void> _loadCompletedTasks() async {
     final db = await DatabaseHelper.instance.database;
     final today = DateTime.now().toIso8601String().split('T')[0];
     
+    // is_completed = 1 olan task'ları al
     final results = await db.query(
-      'task_completion',
-      where: 'DATE(completed_at) = ?',
-      whereArgs: [today],
+      'tasks',
+      columns: ['id'],
+      where: 'user_id = ? AND is_completed = 1',
+      whereArgs: [widget.userId],
     );
     
     setState(() {
-      completedTaskIds = results.map((e) => e['task_id'] as int).toList();
+      completedTaskIds = results.map((e) => e['id'] as int).toList();
     });
   }
 
-  Future<void> _loadUserCoins() async {
+  Future<void> _loadUserCoins() async { //imdat
     final db = await DatabaseHelper.instance.database;
     final result = await db.query(
       'users',
@@ -87,7 +97,15 @@ class _TodoScreenState extends State<TodoScreen> {
     final db = await DatabaseHelper.instance.database;
     
     if (isCompleted) {
-      // Task'ı tamamlandı olarak işaretle
+       // Task'ı tamamlandı olarak işaretle
+      await db.update(
+        'tasks',
+        {'is_completed': 1},
+        where: 'id = ?',
+        whereArgs: [taskId],
+      );
+      // Task'ı tamamlananlara kaydet. 
+      //tarih eklenmeli mi? istatistikler için imdat
       await db.insert('task_completion', {
         'task_id': taskId,
       });
@@ -106,17 +124,28 @@ class _TodoScreenState extends State<TodoScreen> {
         setState(() {
           userCoins += coinReward;
         });
+
+        print('💰 Coin ödülü verildi: +$coinReward');
       }
     } else {
       // Task'ı tamamlanmamış olarak işaretle
-      await db.delete(
+      await db.delete( //burada ne oluyor amk imdat
         'task_completion',
         where: 'task_id = ? AND DATE(completed_at) = ?',
         whereArgs: [taskId, DateTime.now().toIso8601String().split('T')[0]],
       );
+      
+      // Task'ı tamamlanmamış olarak işaretle
+      await db.update(
+        'tasks',
+        {'is_completed': 0},
+        where: 'id = ?',
+        whereArgs: [taskId],
+      );
     }
     
     _loadCompletedTasks();
+    _loadTasks(); // 🎯 Task listesini yenile
   }
 
   void _showAddTaskDialog() {
@@ -526,6 +555,7 @@ class _AddTaskDialogState extends State<AddTaskDialog> {
       'user_id': widget.userId,
       'title': _titleController.text.trim(),
       'description': _descriptionController.text.trim(),
+      'is_active': '1',
       'type': 'one_time', // Sadece one_time görevler
       'coin_reward': 5,
     });

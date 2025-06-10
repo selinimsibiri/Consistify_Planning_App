@@ -24,16 +24,19 @@ class _DailyScreenState extends State<DailyScreen> {
   Future<void> _loadDailyTasks() async {
     final db = await DatabaseHelper.instance.database;
     
+    // 🎯 Sadece aktif daily template'leri getir (is_active = 1)
     final results = await db.query(
       'daily_templates',
-      where: 'user_id = ? AND is_active = ?',
-      whereArgs: [widget.userId, 1],
-      orderBy: 'id ASC',
+      where: 'user_id = ? AND is_active = 1', // 🎯 is_active kontrolü ekledik
+      whereArgs: [widget.userId],
+      orderBy: 'id DESC',
     );
     
     setState(() {
       dailyTasks = results;
     });
+    
+    print('📋 Aktif daily task\'lar yüklendi: ${dailyTasks.length}');
   }
 
   void _showAddDailyDialog() {
@@ -45,7 +48,6 @@ class _DailyScreenState extends State<DailyScreen> {
           userId: widget.userId,
           onDailyAdded: () {
             _loadDailyTasks(); // 🎯 Daily ekranını güncelle
-            _notifyTodoScreen(); // 🎯 Todo ekranını güncelle
           },
         );
       },
@@ -62,7 +64,6 @@ class _DailyScreenState extends State<DailyScreen> {
           daily: daily,
           onDailyUpdated: () {
             _loadDailyTasks(); // 🎯 Daily ekranını güncelle
-            _notifyTodoScreen(); // 🎯 Todo ekranını güncelle
           },
         );
       },
@@ -70,71 +71,48 @@ class _DailyScreenState extends State<DailyScreen> {
   }
 
   Future<void> _deleteDailyTask(int dailyId) async {
-    final db = await DatabaseHelper.instance.database;
-    
-    // 1. Daily template'i pasif yap
-    await db.update(
-      'daily_templates',
-      {'is_active': 0},
-      where: 'id = ?',
-      whereArgs: [dailyId],
-    );
-    
-    // 2. Bu daily template'den oluşmuş bugünkü task'ları da sil
-    final today = DateTime.now().toIso8601String().split('T')[0];
-    await db.delete(
-      'tasks',
-      where: 'daily_template_id = ? AND DATE(created_at) = ? AND is_completed = 0',
-      whereArgs: [dailyId, today],
-    );
-    
-    _loadDailyTasks(); // 🎯 Daily ekranını güncelle
-    _notifyTodoScreen(); // 🎯 Todo ekranını güncelle
-    
-    ScaffoldMessenger.of(context).showSnackBar(
-      SnackBar(
-        content: Text('Daily görev kaldırıldı!'),
-        backgroundColor: Colors.red,
+    // Onay dialogu göster
+    final confirmed = await showDialog<bool>(
+      context: context,
+      builder: (context) => AlertDialog(
+        title: Text('Daily Görevi Sil'),
+        content: Text('Silmek istediğine emin misin?'),
+        actions: [
+          TextButton(
+            onPressed: () => Navigator.pop(context, false),
+            child: Text('İptal'),
+          ),
+          TextButton(
+            onPressed: () => Navigator.pop(context, true),
+            child: Text('Sil', style: TextStyle(color: Colors.red)),
+          ),
+        ],
       ),
     );
-  }
+    
+    if (confirmed == true) {
+      try {
+        // 🎯 Database helper'daki yeni fonksiyonu kullan
+        await DatabaseHelper.instance.deleteDailyTemplate(dailyId);
+        
+        // UI'yi güncelle
+        _loadDailyTasks(); // Daily ekranını güncelle
 
-  // 🎯 Todo ekranına bildirim gönder
-  void _notifyTodoScreen() {
-    // Navigator'dan önceki sayfaya mesaj gönder
-    Navigator.pop(context, 'refresh');
-  }
-
-  void _showDeleteConfirmation(int dailyId, String title) {
-    showDialog(
-      context: context,
-      builder: (BuildContext context) {
-        return AlertDialog(
-          backgroundColor: Color(0xFF6B7280),
-          title: Text(
-            'Daily Görevi Kaldır',
-            style: TextStyle(color: Colors.white),
+        ScaffoldMessenger.of(context).showSnackBar(
+          SnackBar(
+            content: Text('Daily görevi ve ilgili task\'lardan yapmadıkların tamamen silindi!'),
+            backgroundColor: Colors.green,
           ),
-          content: Text(
-            '"$title" daily görevini kaldırmak istediğinizden emin misiniz?',
-            style: TextStyle(color: Colors.white70),
-          ),
-          actions: [
-            TextButton(
-              onPressed: () => Navigator.pop(context),
-              child: Text('İptal', style: TextStyle(color: Colors.white70)),
-            ),
-            TextButton(
-              onPressed: () {
-                Navigator.pop(context);
-                _deleteDailyTask(dailyId);
-              },
-              child: Text('Kaldır', style: TextStyle(color: Colors.red)),
-            ),
-          ],
         );
-      },
-    );
+      } catch (e) {
+        ScaffoldMessenger.of(context).showSnackBar(
+          SnackBar(
+            content: Text('Silme işlemi başarısız: $e'),
+            backgroundColor: Colors.red,
+          ),
+        );
+      }
+    }
   }
 
   @override
@@ -225,14 +203,19 @@ class _DailyScreenState extends State<DailyScreen> {
                   _buildNavButton(
                     icon: Icons.check_circle,
                     color: Color(0xFF8B5CF6), // Mor
-                    onTap: () {
-                      Navigator.push(
+                     onTap: () async {
+                      // ✅ Todo ekranına git ve geri dönüşte refresh yap
+                      final result = await Navigator.push(
                         context,
                         MaterialPageRoute(
                           builder: (context) => TodoScreen(userId: widget.userId),
                         ),
                       );
-                    },
+                      // Todo ekranından geri dönüldüğünde daily'leri yenile
+                      if (result == 'refresh') {
+                        _loadDailyTasks();
+                      }
+                    }
                   ),
                   _buildNavButton(
                     icon: Icons.assignment,
@@ -264,7 +247,7 @@ class _DailyScreenState extends State<DailyScreen> {
       margin: EdgeInsets.only(bottom: 12),
       child: Dismissible(
         key: Key('daily_${daily['id']}'),
-        direction: DismissDirection.endToStart, // 🎯 Sola kaydırma
+        direction: DismissDirection.endToStart,
         background: Container(
           alignment: Alignment.centerRight,
           padding: EdgeInsets.only(right: 20),
@@ -279,7 +262,6 @@ class _DailyScreenState extends State<DailyScreen> {
           ),
         ),
         confirmDismiss: (direction) async {
-          // 🎯 Silme onayı
           return await showDialog<bool>(
             context: context,
             builder: (BuildContext context) {
@@ -290,7 +272,7 @@ class _DailyScreenState extends State<DailyScreen> {
                   style: TextStyle(color: Colors.white),
                 ),
                 content: Text(
-                  '"${daily['title']}" daily görevini silmek istediğinizden emin misiniz?',
+                  '"${daily['title']}" daily görevini ve ona bağlı tüm task\'ları silmek istediğinizden emin misiniz?',
                   style: TextStyle(color: Colors.white70),
                 ),
                 actions: [
@@ -332,7 +314,7 @@ class _DailyScreenState extends State<DailyScreen> {
             
             SizedBox(width: 12),
             
-            // 🎯 Edit butonu (takvim ikonu)
+            // 🎯 Edit butonu
             GestureDetector(
               onTap: () => _showEditDailyDialog(daily),
               child: Container(
@@ -354,6 +336,7 @@ class _DailyScreenState extends State<DailyScreen> {
       ),
     );
   }
+
 
   Widget _buildNavButton({
     required IconData icon,
@@ -594,6 +577,9 @@ class _EditDailyDialogState extends State<EditDailyDialog> {
     }
 
     final db = await DatabaseHelper.instance.database;
+
+    // 🎯 YENİ: Eski günleri al (karşılaştırma için)
+    String oldSelectedDays = widget.daily['selected_days'] ?? '0,0,0,0,0,0,0';
     
     // Seçili günleri string olarak kaydet
     String selectedDaysString = selectedDays.map((e) => e ? '1' : '0').join(',');
@@ -609,6 +595,11 @@ class _EditDailyDialogState extends State<EditDailyDialog> {
       whereArgs: [widget.daily['id']],
     );
 
+    // 🎯 YENİ: Günler değiştiyse bugünkü task'ı kontrol et
+    if (oldSelectedDays != selectedDaysString) {
+      await _checkAndDeactivateTodayTask();
+    }
+
     widget.onDailyUpdated();
     Navigator.pop(context);
     
@@ -618,6 +609,32 @@ class _EditDailyDialogState extends State<EditDailyDialog> {
         backgroundColor: Color(0xFF10B981),
       ),
     );
+  }
+
+  // 🎯 YENİ FONKSİYON: Bugünkü task'ı kontrol et
+  Future<void> _checkAndDeactivateTodayTask() async {
+    try {
+      final today = DateTime.now();
+      final todayWeekday = today.weekday; // 1=Pazartesi, 7=Pazar
+      
+      // Flutter weekday'i database formatına çevir (0=Pazartesi, 6=Pazar)
+      int todayIndex = todayWeekday == 7 ? 6 : todayWeekday - 1;
+      
+      // Bugün seçili günler arasında var mı?
+      bool isTodaySelected = selectedDays[todayIndex];
+      
+      if (!isTodaySelected) {
+        // Bugün artık seçili değilse, bugünkü task'ı deaktif et
+        await DatabaseHelper.instance.deactivateTodayTaskForDaily(
+          widget.daily['id'],
+          today,
+        );
+        
+        print('🔄 Daily güncellenince bugünkü task deaktif edildi');
+      }
+    } catch (e) {
+      print('❌ Bugünkü task deaktif etme hatası: $e');
+    }
   }
 
   @override

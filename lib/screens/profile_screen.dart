@@ -237,7 +237,26 @@ class _ProfileScreenState extends State<ProfileScreen> {
                   _buildNavButton(
                     icon: Icons.trending_up,
                     color: Color(0xFFEC4899), // Pembe
-                    onTap: () {},
+                    onTap: () async {
+                      try {
+                        await DatabaseHelper.instance.exportDatabaseToJson();
+                        
+                        ScaffoldMessenger.of(context).showSnackBar(
+                          SnackBar(
+                            content: Text('📄 Database JSON\'a export edildi!'),
+                            backgroundColor: Colors.green,
+                            duration: Duration(seconds: 2),
+                          ),
+                        );
+                      } catch (e) {
+                        ScaffoldMessenger.of(context).showSnackBar(
+                          SnackBar(
+                            content: Text('❌ Export hatası: $e'),
+                            backgroundColor: Colors.red,
+                          ),
+                        );
+                      }
+                    },
                   ),
                 ],
               ),
