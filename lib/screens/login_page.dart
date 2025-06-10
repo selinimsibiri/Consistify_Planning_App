@@ -5,6 +5,7 @@ import 'package:flutter/material.dart';
 import 'package:sayfa_yonlendirme/db/database_helper.dart';
 import 'package:sayfa_yonlendirme/screens/profile_screen.dart';
 import 'package:sayfa_yonlendirme/screens/signup_page.dart';
+import 'package:sayfa_yonlendirme/services/auth_service.dart';
 
 class LogInPage extends StatefulWidget {
   const LogInPage({super.key});
@@ -31,6 +32,13 @@ class _LogInPageState extends State<LogInPage> {
 
     if (user != null) {
       print("\n***\nHoş geldin ${user.username} 🧜‍♀️\nusername: ${user.username}\nemail: ${user.email}\nhash: ${user.passwordHash}\n***\n");
+
+      // Giriş durumunu kaydediyoruz.
+      await AuthService.saveLoginState(
+        userId: user.id!,
+        username: user.username,
+        email: user.email,
+      );
 
       await DatabaseHelper.instance.generateDailyTasksForUser(user.id!);
 

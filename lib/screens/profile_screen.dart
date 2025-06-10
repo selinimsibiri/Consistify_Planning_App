@@ -4,6 +4,7 @@ import 'package:sayfa_yonlendirme/screens/login_page.dart';
 import 'package:sayfa_yonlendirme/screens/market_section.dart';
 import 'package:sayfa_yonlendirme/db/database_helper.dart';
 import 'package:sayfa_yonlendirme/screens/todo_screen.dart';
+import 'package:sayfa_yonlendirme/services/auth_service.dart';
 
 class ProfileScreen extends StatefulWidget {
   final int userId;
@@ -317,12 +318,23 @@ class _ProfileScreenState extends State<ProfileScreen> {
     );
   }
 
-  void _logout() {
+  void _logout() async {
+    await AuthService.logout();
+
     // Tüm ekranları temizleyip login sayfasına git
     Navigator.pushAndRemoveUntil(
       context,
       MaterialPageRoute(builder: (context) => LogInPage()),
       (route) => false, // Tüm önceki route'ları temizle
+    );
+
+    // 🎯 Kullanıcıya bilgi ver
+    ScaffoldMessenger.of(context).showSnackBar(
+      SnackBar(
+        content: Text('Başarıyla çıkış yapıldı!'),
+        backgroundColor: Colors.green,
+        duration: Duration(seconds: 2),
+      ),
     );
   }
 }

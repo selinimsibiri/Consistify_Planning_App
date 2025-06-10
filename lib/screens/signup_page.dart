@@ -6,6 +6,7 @@ import 'package:sayfa_yonlendirme/db/database_helper.dart';
 import 'package:sayfa_yonlendirme/models/user.dart';
 import 'package:sayfa_yonlendirme/screens/login_page.dart';
 import 'package:sayfa_yonlendirme/screens/profile_screen.dart';
+import 'package:sayfa_yonlendirme/services/auth_service.dart';
 
 class SignUpPage extends StatefulWidget {
   const SignUpPage({super.key});
@@ -59,6 +60,13 @@ class _SignUpPageState extends State<SignUpPage> {
     } else {
       print("✅ Kayıt başarılı! User ID: $result");
       
+      // Kayıt sonrası giriş durumunu kaydediyoruz
+      await AuthService.saveLoginState(
+        userId: result,
+        username: username,
+        email: email,
+      );
+
       // Profil ekranına yönlendirme - result değişkeni user ID'dir
       Navigator.pushReplacement(
         context,
