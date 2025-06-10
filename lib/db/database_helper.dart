@@ -176,14 +176,18 @@ class DatabaseHelper {
       return -1;
     }
 
-    // Eğer yoksa yeni kullanıcıyı ekle
-    await db.insert(
+    // Bu satır hem kaydı ekler, hem de yeni ID'yi döndürür
+    final newUserId = await db.insert(
       'users',
       user.toMap(),
       conflictAlgorithm: ConflictAlgorithm.replace,
     );
-    return 1;  // Kayıt başarılı
+    
+    print("🎯 Yeni kullanıcı kaydedildi! Gerçek ID: $newUserId"); // Debug
+    
+    return newUserId;  // ✅ Gerçek kullanıcı ID'sini döndür
   }
+
 
   Future<User?> loginUser(String email, String password) async {
     final db = await instance.database;
