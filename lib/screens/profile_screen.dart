@@ -17,18 +17,11 @@ class ProfileScreen extends StatefulWidget {
 class _ProfileScreenState extends State<ProfileScreen> {
   late int userId;
   Map<String, String> selectedItems = {};
+  int userCoins = 0; // 🪙 Kullanıcı coin bilgisi
 
-  // Katman sıralamasını
+  // Katman sıralaması
   final List<String> layerOrder = [
-    'body',    // En arkada
-    'shoes',   // Ayakkabı
-    'bottom',  // Pantolon/etek
-    'top',     // Üst giyim
-    'mouth',   // Ağız
-    'eyes',    // Gözler
-    'hair',    // Saç
-    'accs',    // Aksesuar
-    'hat',     // Şapka (en önde)
+    'body', 'shoes', 'bottom', 'top', 'mouth', 'eyes', 'hair', 'accs', 'hat',
   ];
 
   @override
@@ -36,11 +29,28 @@ class _ProfileScreenState extends State<ProfileScreen> {
     super.initState();
     userId = widget.userId;
     _loadSelectedItems();
+    _loadUserCoins(); // 🪙 Coin bilgisini yükle
+  }
+
+  // 🪙 Kullanıcının coin bilgisini yükle
+  Future<void> _loadUserCoins() async {
+    final db = await DatabaseHelper.instance.database;
+    final result = await db.query(
+      'users',
+      columns: ['coins'],
+      where: 'id = ?',
+      whereArgs: [userId],
+    );
+
+    if (result.isNotEmpty) {
+      setState(() {
+        userCoins = result.first['coins'] as int? ?? 0;
+      });
+    }
   }
 
   Future<void> _loadSelectedItems() async {
     final db = await DatabaseHelper.instance.database;
-
     final result = await db.rawQuery('''
       SELECT si.name, si.category_id, c.name as category_name
       FROM user_selected_items usi
@@ -65,150 +75,173 @@ class _ProfileScreenState extends State<ProfileScreen> {
     setState(() {
       selectedItems[category] = imagePath;
     });
+    // Market'ten item seçildiğinde coin bilgisini güncelle
+    _loadUserCoins(); //buraya bakalım market bölümünü yaparken imdat
   }
 
   @override
   Widget build(BuildContext context) {
     return Scaffold(
-      backgroundColor: Color(0xFF2D2D2D), // Koyu gri arkaplan
+      backgroundColor: Color(0xFF1A1A1A),
       body: SafeArea(
         child: Column(
           children: [
-            // 🎯 Üst Bar - Mor gradient
-            Container(
-              width: double.infinity,
-              height: 80,
-              decoration: BoxDecoration(
-                gradient: LinearGradient(
-                  colors: [
-                    Color(0xFF8B5CF6), // Mor
-                    Color(0xFF7C3AED), // Koyu mor
-                  ],
-                  begin: Alignment.topLeft,
-                  end: Alignment.bottomRight,
-                ),
-              ),
-              child: Padding(
-                padding: EdgeInsets.symmetric(horizontal: 16, vertical: 8),
-                child: Row(
-                  children: [
-                    // Settings icon
-                    GestureDetector(
-                      onTap: () {
-                        _showLogoutDialog();
-                      },
-                      child: Container(
-                        width: 40,
-                        height: 40,
-                        decoration: BoxDecoration(
-                          color: Colors.white.withOpacity(0.2),
-                          borderRadius: BorderRadius.circular(8),
-                        ),
-                        child: Icon(
-                          Icons.settings,
-                          color: Colors.white,
-                          size: 20,
-                        ),
+            // ÜST BAR
+            Padding(
+              padding: const EdgeInsets.all(16.0),
+              child: Row(
+                children: [
+                  // Sol - Settings butonu
+                  GestureDetector(
+                    onTap: _showLogoutDialog,
+                    child: Container(
+                      width: 40,
+                      height: 40,
+                      decoration: BoxDecoration(
+                        color: Color(0xFF404040),
+                        borderRadius: BorderRadius.circular(8),
                       ),
-                    ),
-                    
-                    Spacer(),
-                    
-                    // Profile text
-                    Text(
-                      "PROFILE",
-                      style: TextStyle(
-                        fontSize: 24,
-                        fontWeight: FontWeight.bold,
+                      child: Icon(
+                        Icons.settings,
                         color: Colors.white,
-                        letterSpacing: 1.2,
+                        size: 20,
                       ),
                     ),
-                    
-                    Spacer(),
-                    
-                    // Level & Coins
-                    Column(
-                      mainAxisAlignment: MainAxisAlignment.center,
-                      crossAxisAlignment: CrossAxisAlignment.end,
+                  ),
+                  
+                  // 🎯 PROFILE başlığı - Dinamik genişlik
+                  Expanded(
+                    child: Container(
+                      margin: EdgeInsets.symmetric(horizontal: 16), // Sol-sağ boşluk
+                      padding: EdgeInsets.symmetric(horizontal: 20, vertical: 8),
+                      decoration: BoxDecoration(
+                        gradient: LinearGradient(
+                          colors: [Color(0xFF8B5CF6), Color(0xFF7C3AED)],
+                          begin: Alignment.centerLeft,
+                          end: Alignment.centerRight,
+                        ),
+                        borderRadius: BorderRadius.circular(8),
+                      ),
+                      child: Center(
+                        child: Text(
+                          'PROFILE',
+                          style: TextStyle(
+                            fontSize: 16,
+                            fontWeight: FontWeight.bold,
+                            color: Colors.white,
+                            letterSpacing: 1,
+                          ),
+                        ),
+                      ),
+                    ),
+                  ),
+                  
+                  // Sağ - Coin (kapsül şeklinde) 🪙
+                  Container(
+                    padding: EdgeInsets.symmetric(horizontal: 12, vertical: 8),
+                    decoration: BoxDecoration(
+                      gradient: LinearGradient(
+                        colors: [Color(0xFFF59E0B), Color(0xFFD97706)],
+                        begin: Alignment.centerLeft,
+                        end: Alignment.centerRight,
+                      ),
+                      borderRadius: BorderRadius.circular(8),
+                    ),
+                    child: Row(
+                      mainAxisSize: MainAxisSize.min,
                       children: [
                         Text(
-                          "13 🔥",
+                          '$userCoins',
                           style: TextStyle(
-                            fontSize: 18,
+                            fontSize: 16,
                             fontWeight: FontWeight.bold,
                             color: Colors.white,
                           ),
                         ),
-                        Row(
-                          children: [
-                            Text(
-                              "💰 256",
-                              style: TextStyle(
-                                fontSize: 14,
-                                color: Colors.yellow[300],
-                                fontWeight: FontWeight.w600,
-                              ),
-                            ),
-                          ],
-                        ),
+                        SizedBox(width: 4),
+                        Text('🪙', style: TextStyle(fontSize: 14)),
                       ],
                     ),
+                  ),
+                ],
+              ),
+            ),
+
+            // 🎯 Karakter Görseli
+            Padding(
+              padding: const EdgeInsets.all(20.0),
+              child: Container(
+                width: double.infinity,
+                height: 220,
+                decoration: BoxDecoration(
+                  gradient: LinearGradient(
+                    colors: [
+                      Color(0xFFF8F9FA),
+                      Color(0xFFE9ECEF),
+                    ],
+                    begin: Alignment.topLeft,
+                    end: Alignment.bottomRight,
+                  ),
+                  borderRadius: BorderRadius.circular(20),
+                  border: Border.all(
+                    color: Color(0xFF8B5CF6).withOpacity(0.3),
+                    width: 2,
+                  ),
+                  boxShadow: [
+                    BoxShadow(
+                      color: Color(0xFF8B5CF6).withOpacity(0.1),
+                      blurRadius: 20,
+                      offset: Offset(0, 8),
+                    ),
+                  ],
+                ),
+                child: Stack(
+                  alignment: Alignment.center,
+                  children: [
+                    // Karakter katmanları
+                    ...layerOrder.map((category) {
+                      if (selectedItems.containsKey(category)) {
+                        return Image.asset(
+                          selectedItems[category]!,
+                          fit: BoxFit.contain,
+                          height: 200,
+                        );
+                      }
+                      return SizedBox.shrink();
+                    }).toList(),
                   ],
                 ),
               ),
             ),
 
-             // 🎯 Karakter Görseli - Düzeltilmiş katman sıralaması
-              Padding(
-                padding: const EdgeInsets.all(16.0),
-                child: Container(
-                  width: double.infinity,
-                  height: 200,
-                  decoration: BoxDecoration(
-                    color: Color(0xFFF5F5F5),
-                    borderRadius: BorderRadius.circular(16),
-                    border: Border.all(
-                      color: Color(0xFFE0E0E0),
-                      width: 2,
-                    ),
-                  ),
-                  child: Stack(
-                    alignment: Alignment.center,
-                    children: [
-                      // ✅ Katmanları sabit sırayla göster
-                      ...layerOrder.map((category) {
-                        if (selectedItems.containsKey(category)) {
-                          return Image.asset(
-                            selectedItems[category]!,
-                            fit: BoxFit.contain,
-                            height: 180,
-                          );
-                        }
-                        return SizedBox.shrink(); // Boş widget
-                      }).toList(),
-                    ],
-                  ),
-                ),
-              ),
-
             // 🎯 Market Alanı
             Expanded(
               child: MarketSection(
-                onItemSelected: updateSelectedItem, userId: userId,
+                onItemSelected: updateSelectedItem, 
+                userId: userId,
               ),
             ),
 
-            // 🎯 Alt Navigation Bar - Renkli butonlar
+            // 🎯 ALT TAB BAR
             Container(
               height: 80,
-              color: Color(0xFF2D2D2D),
+              decoration: BoxDecoration(
+                color: Color(0xFF2D2D2D),
+                boxShadow: [
+                  BoxShadow(
+                    color: Colors.black.withOpacity(0.3),
+                    blurRadius: 10,
+                    offset: Offset(0, -2),
+                  ),
+                ],
+              ),
               child: Row(
                 mainAxisAlignment: MainAxisAlignment.spaceEvenly,
                 children: [
-                  _buildNavButton(
+                  // Todo butonu
+                  _buildTabButton(
                     icon: Icons.check_circle,
-                    color: Color(0xFF8B5CF6), // Mor
+                    color: Color(0xFF8B5CF6),
                     onTap: () {
                       Navigator.push(
                         context,
@@ -218,7 +251,9 @@ class _ProfileScreenState extends State<ProfileScreen> {
                       );
                     },
                   ),
-                  _buildNavButton(
+                  
+                  // Daily butonu
+                  _buildTabButton(
                     icon: Icons.assignment,
                     color: Color(0xFF06B6D4),
                     onTap: () {
@@ -230,32 +265,25 @@ class _ProfileScreenState extends State<ProfileScreen> {
                       );
                     },
                   ),
-                  _buildNavButton(
-                    icon: Icons.home,
-                    color: Color(0xFFF59E0B), // Turuncu
+                  
+                  // Profile butonu (aktif - turuncu)
+                  _buildTabButton(
+                    icon: Icons.person,
+                    color: Color(0xFFF59E0B),
+                    isActive: true,
                     onTap: () {},
                   ),
-                  _buildNavButton(
+                  
+                  // Export butonu
+                  _buildTabButton(
                     icon: Icons.trending_up,
-                    color: Color(0xFFEC4899), // Pembe
+                    color: Color(0xFFEC4899),
                     onTap: () async {
                       try {
                         await DatabaseHelper.instance.exportDatabaseToJson();
-                        
-                        ScaffoldMessenger.of(context).showSnackBar(
-                          SnackBar(
-                            content: Text('📄 Database JSON\'a export edildi!'),
-                            backgroundColor: Colors.green,
-                            duration: Duration(seconds: 2),
-                          ),
-                        );
+                        _showSnackBar('📄 Database başarıyla export edildi!', Colors.green);
                       } catch (e) {
-                        ScaffoldMessenger.of(context).showSnackBar(
-                          SnackBar(
-                            content: Text('❌ Export hatası: $e'),
-                            backgroundColor: Colors.red,
-                          ),
-                        );
+                        _showSnackBar('❌ Export hatası: $e', Colors.red);
                       }
                     },
                   ),
@@ -268,10 +296,12 @@ class _ProfileScreenState extends State<ProfileScreen> {
     );
   }
 
-  Widget _buildNavButton({
+  // 🎯 Tab Button
+  Widget _buildTabButton({
     required IconData icon,
     required Color color,
     required VoidCallback onTap,
+    bool isActive = false,
   }) {
     return GestureDetector(
       onTap: onTap,
@@ -281,6 +311,13 @@ class _ProfileScreenState extends State<ProfileScreen> {
         decoration: BoxDecoration(
           color: color,
           borderRadius: BorderRadius.circular(12),
+          boxShadow: [
+            BoxShadow(
+              color: color.withOpacity(0.3),
+              blurRadius: 8,
+              offset: Offset(0, 3),
+            ),
+          ],
         ),
         child: Icon(
           icon,
@@ -291,26 +328,47 @@ class _ProfileScreenState extends State<ProfileScreen> {
     );
   }
 
+  // 🎯 Logout Dialog
   void _showLogoutDialog() {
     showDialog(
       context: context,
       builder: (BuildContext context) {
         return AlertDialog(
-          title: Text('Çıkış Yap'),
-          content: Text('Hesabınızdan çıkış yapmak istediğinizden emin misiniz?'),
+          backgroundColor: Color(0xFF2D2D2D),
+          shape: RoundedRectangleBorder(
+            borderRadius: BorderRadius.circular(16),
+          ),
+          title: Text(
+            'Çıkış Yap',
+            style: TextStyle(color: Colors.white),
+          ),
+          content: Text(
+            'Hesabınızdan çıkış yapmak istediğinizden emin misiniz?',
+            style: TextStyle(color: Colors.white70),
+          ),
           actions: [
             TextButton(
-              onPressed: () {
-                Navigator.of(context).pop(); // Dialog'u kapat
-              },
-              child: Text('İptal'),
+              onPressed: () => Navigator.of(context).pop(),
+              child: Text(
+                'İptal',
+                style: TextStyle(color: Colors.white70),
+              ),
             ),
-            TextButton(
+            ElevatedButton(
               onPressed: () {
-                Navigator.of(context).pop(); // Dialog'u kapat
-                _logout(); // Çıkış yap
+                Navigator.of(context).pop();
+                _logout();
               },
-              child: Text('Çıkış Yap'),
+              style: ElevatedButton.styleFrom(
+                backgroundColor: Color(0xFFEC4899),
+                shape: RoundedRectangleBorder(
+                  borderRadius: BorderRadius.circular(8),
+                ),
+              ),
+              child: Text(
+                'Çıkış Yap',
+                style: TextStyle(color: Colors.white),
+              ),
             ),
           ],
         );
@@ -320,20 +378,24 @@ class _ProfileScreenState extends State<ProfileScreen> {
 
   void _logout() async {
     await AuthService.logout();
-
-    // Tüm ekranları temizleyip login sayfasına git
     Navigator.pushAndRemoveUntil(
       context,
       MaterialPageRoute(builder: (context) => LogInPage()),
-      (route) => false, // Tüm önceki route'ları temizle
+      (route) => false,
     );
+    _showSnackBar('Başarıyla çıkış yapıldı!', Colors.green);
+  }
 
-    // 🎯 Kullanıcıya bilgi ver
+  void _showSnackBar(String message, Color color) {
     ScaffoldMessenger.of(context).showSnackBar(
       SnackBar(
-        content: Text('Başarıyla çıkış yapıldı!'),
-        backgroundColor: Colors.green,
+        content: Text(message),
+        backgroundColor: color,
         duration: Duration(seconds: 2),
+        behavior: SnackBarBehavior.floating,
+        shape: RoundedRectangleBorder(
+          borderRadius: BorderRadius.circular(10),
+        ),
       ),
     );
   }

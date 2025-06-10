@@ -11,15 +11,28 @@ class MarketSection extends StatefulWidget {
   _MarketSectionState createState() => _MarketSectionState();
 }
 
-class _MarketSectionState extends State<MarketSection> {
+class _MarketSectionState extends State<MarketSection> with TickerProviderStateMixin {
   Map<String, String> selectedItems = {};
   late int userId;
+  late AnimationController _categoryController;
 
   @override
   void initState() {
     super.initState();
     userId = widget.userId;
     _loadUserSelectedItems();
+    
+    // 🎯 Kategori animasyonu
+    _categoryController = AnimationController(
+      duration: Duration(milliseconds: 300),
+      vsync: this,
+    );
+  }
+
+  @override
+  void dispose() {
+    _categoryController.dispose();
+    super.dispose();
   }
 
   List<Map<String, String>> categories = [
@@ -35,22 +48,14 @@ class _MarketSectionState extends State<MarketSection> {
   ];
 
   Map<String, int> categoryIds = {
-    'body': 1,
-    'eyes': 2,
-    'mouth': 3,
-    'hair': 4,
-    'top': 5,
-    'bottom': 6,
-    'shoes': 7,
-    'accs': 8,
-    'hat': 9,
+    'body': 1, 'eyes': 2, 'mouth': 3, 'hair': 4, 'top': 5,
+    'bottom': 6, 'shoes': 7, 'accs': 8, 'hat': 9,
   };
 
   String selectedCategory = 'body';
 
   Future<void> _loadUserSelectedItems() async {
     final db = await DatabaseHelper.instance.database;
-
     final result = await db.rawQuery('''
       SELECT s.name, s.category_id, c.name as category_name
       FROM user_selected_items u
@@ -71,7 +76,6 @@ class _MarketSectionState extends State<MarketSection> {
 
   Future<List<Map<String, dynamic>>> getItemsForSelectedCategory() async {
     final db = await DatabaseHelper.instance.database;
-
     return await db.query(
       'shop_items',
       where: 'category_id = ?',
@@ -83,59 +87,133 @@ class _MarketSectionState extends State<MarketSection> {
   Widget build(BuildContext context) {
     return Container(
       decoration: BoxDecoration(
-        color: Color(0xFF404040), // Koyu gri arkaplan
-        borderRadius: BorderRadius.only(
-          topLeft: Radius.circular(20),
-          topRight: Radius.circular(20),
+        gradient: LinearGradient(
+          colors: [
+            Color(0xFF404040),
+            Color(0xFF2D2D2D),
+          ],
+          begin: Alignment.topCenter,
+          end: Alignment.bottomCenter,
         ),
+        borderRadius: BorderRadius.only(
+          topLeft: Radius.circular(25),
+          topRight: Radius.circular(25),
+        ),
+        boxShadow: [
+          BoxShadow(
+            color: Colors.black.withOpacity(0.3),
+            blurRadius: 20,
+            offset: Offset(0, -5),
+          ),
+        ],
       ),
       child: Column(
         crossAxisAlignment: CrossAxisAlignment.start,
         children: [
-          SizedBox(height: 16),
+          // 🎯 Market başlığı
+          Padding(
+            padding: EdgeInsets.all(20),
+            child: Row(
+              children: [
+                Container(
+                  padding: EdgeInsets.all(8),
+                  decoration: BoxDecoration(
+                    gradient: LinearGradient(
+                      colors: [Color(0xFF8B5CF6), Color(0xFF7C3AED)],
+                    ),
+                    borderRadius: BorderRadius.circular(12),
+                  ),
+                  child: Icon(
+                    Icons.store_rounded,
+                    color: Colors.white,
+                    size: 24,
+                  ),
+                ),
+                SizedBox(width: 12),
+                Text(
+                  'MARKET',
+                  style: TextStyle(
+                    fontSize: 20,
+                    fontWeight: FontWeight.bold,
+                    color: Colors.white,
+                    letterSpacing: 1.5,
+                  ),
+                ),
+              ],
+            ),
+          ),
           
-          // 🎯 Kategori Butonları
+          // 🎯 Kategori Butonları - Geliştirilmiş
           Container(
-            height: 60,
-            margin: EdgeInsets.symmetric(vertical: 8),
+            height: 70,
+            margin: EdgeInsets.only(bottom: 16),
             child: ListView.builder(
               scrollDirection: Axis.horizontal,
+              padding: EdgeInsets.symmetric(horizontal: 16),
               itemCount: categories.length,
               itemBuilder: (context, index) {
                 final cat = categories[index];
                 final isSelected = cat['name'] == selectedCategory;
 
                 return Container(
-                  margin: EdgeInsets.only(
-                    left: index == 0 ? 16 : 4,
-                    right: index == categories.length - 1 ? 16 : 4,
-                  ),
+                  margin: EdgeInsets.only(right: 12),
                   child: GestureDetector(
                     onTap: () {
                       setState(() {
                         selectedCategory = cat['name']!;
                       });
+                      _categoryController.forward().then((_) {
+                        _categoryController.reverse();
+                      });
                     },
-                    child: Container(
-                      width: 50,
-                      height: 50,
+                    child: AnimatedContainer(
+                      duration: Duration(milliseconds: 300),
+                      width: 60,
+                      height: 60,
                       decoration: BoxDecoration(
-                        color: isSelected 
-                            ? Color(0xFF8B5CF6) // Mor (seçili)
-                            : Color(0xFF6B6B6B), // Gri (seçili değil)
-                        borderRadius: BorderRadius.circular(12),
+                        gradient: isSelected 
+                            ? LinearGradient(
+                                colors: [Color(0xFF8B5CF6), Color(0xFF7C3AED)],
+                                begin: Alignment.topLeft,
+                                end: Alignment.bottomRight,
+                              )
+                            : null,
+                        color: isSelected ? null : Color(0xFF6B6B6B),
+                        borderRadius: BorderRadius.circular(16),
                         border: Border.all(
                           color: isSelected 
-                              ? Color(0xFF7C3AED) // Koyu mor border
+                              ? Colors.white.withOpacity(0.3)
                               : Colors.transparent,
                           width: 2,
                         ),
+                        boxShadow: isSelected ? [
+                          BoxShadow(
+                            color: Color(0xFF8B5CF6).withOpacity(0.4),
+                            blurRadius: 12,
+                            offset: Offset(0, 4),
+                          ),
+                        ] : null,
                       ),
-                      padding: const EdgeInsets.all(6),
-                      child: Image.asset(
-                        cat['icon']!,
-                        fit: BoxFit.contain,
-                        color: Colors.white, // Icon beyaz
+                      padding: const EdgeInsets.all(8),
+                      child: Column(
+                        mainAxisAlignment: MainAxisAlignment.center,
+                        children: [
+                          Image.asset(
+                            cat['icon']!,
+                            fit: BoxFit.contain,
+                            color: Colors.white,
+                            height: 28,
+                          ),
+                          SizedBox(height: 2),
+                          Text(
+                            cat['name']!.toUpperCase(),
+                            style: TextStyle(
+                              color: Colors.white,
+                              fontSize: 8,
+                              fontWeight: FontWeight.bold,
+                            ),
+                          ),
+                        ],
                       ),
                     ),
                   ),
@@ -144,9 +222,7 @@ class _MarketSectionState extends State<MarketSection> {
             ),
           ),
 
-          SizedBox(height: 12),
-
-          // 🎯 Grid Items
+          // 🎯 Grid Items - Geliştirilmiş
           Expanded(
             child: Padding(
               padding: const EdgeInsets.symmetric(horizontal: 16),
@@ -155,16 +231,45 @@ class _MarketSectionState extends State<MarketSection> {
                 builder: (context, snapshot) {
                   if (snapshot.connectionState == ConnectionState.waiting) {
                     return Center(
-                      child: CircularProgressIndicator(
-                        color: Color(0xFF8B5CF6),
+                      child: Column(
+                        mainAxisAlignment: MainAxisAlignment.center,
+                        children: [
+                          CircularProgressIndicator(
+                            color: Color(0xFF8B5CF6),
+                            strokeWidth: 3,
+                          ),
+                          SizedBox(height: 16),
+                          Text(
+                            "Yükleniyor...",
+                            style: TextStyle(
+                              color: Colors.white70,
+                              fontSize: 16,
+                            ),
+                          ),
+                        ],
                       ),
                     );
                   }
+                  
                   if (!snapshot.hasData || snapshot.data!.isEmpty) {
                     return Center(
-                      child: Text(
-                        "Bu kategoriye ait item bulunamadı.",
-                        style: TextStyle(color: Colors.white70),
+                      child: Column(
+                        mainAxisAlignment: MainAxisAlignment.center,
+                        children: [
+                          Icon(
+                            Icons.inventory_2_outlined,
+                            color: Colors.white30,
+                            size: 64,
+                          ),
+                          SizedBox(height: 16),
+                          Text(
+                            "Bu kategoriye ait item bulunamadı.",
+                            style: TextStyle(
+                              color: Colors.white70,
+                              fontSize: 16,
+                            ),
+                          ),
+                        ],
                       ),
                     );
                   }
@@ -177,12 +282,13 @@ class _MarketSectionState extends State<MarketSection> {
                     itemCount: items.length,
                     gridDelegate: SliverGridDelegateWithFixedCrossAxisCount(
                       crossAxisCount: 4,
-                      mainAxisSpacing: 12,
-                      crossAxisSpacing: 12,
+                      mainAxisSpacing: 16,
+                      crossAxisSpacing: 16,
                     ),
                     itemBuilder: (context, index) {
                       final item = items[index];
                       String imagePath = 'assets/items/$selectedCategory/${item['name']}.png';
+                      bool isItemSelected = selectedItems[selectedCategory] == imagePath;
 
                       return GestureDetector(
                         onTap: () async {
@@ -207,21 +313,46 @@ class _MarketSectionState extends State<MarketSection> {
                             selectedItems[selectedCategory] = imagePath;
                           });
                         },
-                        child: Container(
+                        child: AnimatedContainer(
+                          duration: Duration(milliseconds: 300),
                           decoration: BoxDecoration(
-                            color: Color(0xFF6B6B6B), // Gri arkaplan
-                            borderRadius: BorderRadius.circular(12),
+                            gradient: isItemSelected 
+                                ? LinearGradient(
+                                    colors: [
+                                      Color(0xFF8B5CF6).withOpacity(0.3),
+                                      Color(0xFF7C3AED).withOpacity(0.3),
+                                    ],
+                                  )
+                                : null,
+                            color: isItemSelected ? null : Color(0xFF6B6B6B),
+                            borderRadius: BorderRadius.circular(16),
                             border: Border.all(
-                              color: selectedItems[selectedCategory] == imagePath
-                                  ? Color(0xFF8B5CF6) // Mor border (seçili)
+                              color: isItemSelected
+                                  ? Color(0xFF8B5CF6)
                                   : Colors.transparent,
                               width: 3,
                             ),
+                            boxShadow: isItemSelected ? [
+                              BoxShadow(
+                                color: Color(0xFF8B5CF6).withOpacity(0.4),
+                                blurRadius: 12,
+                                offset: Offset(0, 4),
+                              ),
+                            ] : [
+                              BoxShadow(
+                                color: Colors.black.withOpacity(0.2),
+                                blurRadius: 8,
+                                offset: Offset(0, 2),
+                              ),
+                            ],
                           ),
                           padding: const EdgeInsets.all(8),
-                          child: Image.asset(
-                            imagePath,
-                            fit: BoxFit.cover,
+                          child: ClipRRect(
+                            borderRadius: BorderRadius.circular(12),
+                            child: Image.asset(
+                              imagePath,
+                              fit: BoxFit.cover,
+                            ),
                           ),
                         ),
                       );
@@ -231,6 +362,8 @@ class _MarketSectionState extends State<MarketSection> {
               ),
             ),
           ),
+          
+          SizedBox(height: 16), // Alt boşluk
         ],
       ),
     );

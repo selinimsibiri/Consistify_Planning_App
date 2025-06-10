@@ -1,4 +1,5 @@
 import 'package:flutter/material.dart';
+import 'package:flutter/services.dart';
 import 'package:sayfa_yonlendirme/db/database_helper.dart';
 import 'package:sayfa_yonlendirme/screens/daily_screen.dart';
 import 'package:sayfa_yonlendirme/screens/profile_screen.dart';
@@ -26,10 +27,7 @@ class _TodoScreenState extends State<TodoScreen> {
   }
 
   Future<void> _initializeTodoScreen() async {
-    // 1. Önce daily'leri kontrol et ve oluştur
     await DatabaseHelper.instance.generateDailyTasksForUser(widget.userId);
-    
-    // 2. Sonra task'ları yükle
     await _loadTasks();
     await _loadUserCoins();
     await _loadCompletedTasks();
@@ -38,7 +36,6 @@ class _TodoScreenState extends State<TodoScreen> {
   Future<void> _loadTasks() async {
     final db = await DatabaseHelper.instance.database;
 
-    // One-time tasks
     final oneTimeResults = await db.query(
       'tasks',
       where: 'user_id = ? AND type = ?',
@@ -46,7 +43,6 @@ class _TodoScreenState extends State<TodoScreen> {
       orderBy: 'id ASC',
     );
     
-    // Daily tasks
     final dailyResults = await db.query(
       'tasks',
       where: 'user_id = ? AND type = ?',
@@ -64,7 +60,6 @@ class _TodoScreenState extends State<TodoScreen> {
     final db = await DatabaseHelper.instance.database;
     final today = DateTime.now().toIso8601String().split('T')[0];
     
-    // is_completed = 1 olan task'ları al
     final results = await db.query(
       'tasks',
       columns: ['id'],
@@ -77,7 +72,7 @@ class _TodoScreenState extends State<TodoScreen> {
     });
   }
 
-  Future<void> _loadUserCoins() async { //imdat
+  Future<void> _loadUserCoins() async {
     final db = await DatabaseHelper.instance.database;
     final result = await db.query(
       'users',
@@ -97,20 +92,17 @@ class _TodoScreenState extends State<TodoScreen> {
     final db = await DatabaseHelper.instance.database;
     
     if (isCompleted) {
-       // Task'ı tamamlandı olarak işaretle
       await db.update(
         'tasks',
         {'is_completed': 1},
         where: 'id = ?',
         whereArgs: [taskId],
       );
-      // Task'ı tamamlananlara kaydet. 
-      //tarih eklenmeli mi? istatistikler için imdat
+      
       await db.insert('task_completion', {
         'task_id': taskId,
       });
       
-      // Coin ödülü ver
       final task = await db.query('tasks', where: 'id = ?', whereArgs: [taskId]);
       if (task.isNotEmpty) {
         int coinReward = task.first['coin_reward'] as int;
@@ -128,14 +120,12 @@ class _TodoScreenState extends State<TodoScreen> {
         print('💰 Coin ödülü verildi: +$coinReward');
       }
     } else {
-      // Task'ı tamamlanmamış olarak işaretle
-      await db.delete( //burada ne oluyor amk imdat
+      await db.delete(
         'task_completion',
         where: 'task_id = ? AND DATE(completed_at) = ?',
         whereArgs: [taskId, DateTime.now().toIso8601String().split('T')[0]],
       );
       
-      // Task'ı tamamlanmamış olarak işaretle
       await db.update(
         'tasks',
         {'is_completed': 0},
@@ -145,7 +135,7 @@ class _TodoScreenState extends State<TodoScreen> {
     }
     
     _loadCompletedTasks();
-    _loadTasks(); // 🎯 Task listesini yenile
+    _loadTasks();
   }
 
   void _showAddTaskDialog() {
@@ -161,7 +151,6 @@ class _TodoScreenState extends State<TodoScreen> {
     );
   }
 
-  // 🎯 Görevleri sırala: Tamamlanmayanlar üstte, tamamlananlar altta
   List<Map<String, dynamic>> _sortTasks(List<Map<String, dynamic>> tasks) {
     final notCompleted = tasks.where((task) => 
       !completedTaskIds.contains(task['id'])
@@ -180,145 +169,254 @@ class _TodoScreenState extends State<TodoScreen> {
     final sortedDailyTasks = _sortTasks(dailyTasks);
 
     return Scaffold(
-      backgroundColor: Color(0xFF2D2D2D),
-      body: SafeArea(
-        child: Column(
-          children: [
-            // 🎯 Üst Bar
-            Container(
-              padding: EdgeInsets.all(16),
-              child: Row(
-                children: [
-                  Icon(Icons.settings, color: Colors.white, size: 24),
-                  Spacer(),
-                  Container(
-                    padding: EdgeInsets.symmetric(horizontal: 20, vertical: 8),
-                    decoration: BoxDecoration(
-                      color: Color(0xFF8B5CF6),
-                      borderRadius: BorderRadius.circular(20),
+      // Status bar'ı koyu yap
+      appBar: PreferredSize(
+        preferredSize: Size.zero,
+        child: AppBar(
+          backgroundColor: Color(0xFF1A1A1A), // Üst bar ile aynı renk
+          elevation: 0,
+          systemOverlayStyle: SystemUiOverlayStyle(
+            statusBarColor: Color(0xFF1A1A1A), // Status bar rengi
+            statusBarIconBrightness: Brightness.light, // İkonlar beyaz
+            statusBarBrightness: Brightness.dark, // iOS için
+          ),
+        ),
+      ),
+      body: Container(
+        decoration: BoxDecoration(
+          gradient: LinearGradient(
+            begin: Alignment.topCenter,
+            end: Alignment.bottomCenter,
+            colors: [
+              Color.fromARGB(255, 46, 46, 46), // Tek renk
+            ],
+            stops: [1.0],
+          ),
+        ),
+        child: SafeArea(
+          child: Column(
+            children: [
+              // 🎯 Üst Bar - Alt navigation ile aynı arka plan
+              Container(
+                decoration: BoxDecoration(
+                  color: Color(0xFF1A1A1A), // Alt navigation ile aynı renk
+                  boxShadow: [
+                    BoxShadow(
+                      color: Colors.black.withOpacity(0.3),
+                      blurRadius: 10,
+                      offset: Offset(0, 2), // Aşağı doğru gölge
                     ),
-                    child: Text(
-                      'TO DO LIST',
-                      style: TextStyle(
+                  ],
+                ),
+                padding: EdgeInsets.symmetric(horizontal: 20, vertical: 16),
+                child: Row(
+                  children: [
+                    // ⚙️ Settings icon
+                    Container(
+                      width: 40,
+                      height: 40,
+                      decoration: BoxDecoration(
+                        color: Color(0xFF404040),
+                        borderRadius: BorderRadius.circular(12),
+                      ),
+                      child: Icon(
+                        Icons.settings,
                         color: Colors.white,
-                        fontSize: 16,
-                        fontWeight: FontWeight.bold,
+                        size: 20,
                       ),
                     ),
-                  ),
-                  Spacer(),
-                  Container(
-                    padding: EdgeInsets.symmetric(horizontal: 12, vertical: 6),
-                    decoration: BoxDecoration(
-                      color: Color(0xFFF59E0B),
-                      borderRadius: BorderRadius.circular(15),
-                    ),
-                    child: Row(
-                      mainAxisSize: MainAxisSize.min,
-                      children: [
-                        Text(
-                          '$streakCount',
-                          style: TextStyle(
-                            color: Colors.white,
-                            fontSize: 16,
-                            fontWeight: FontWeight.bold,
+                    
+                    // 📝 TO DO LIST başlığı - Dinamik genişlik
+                    Expanded(
+                      child: Container(
+                        margin: EdgeInsets.symmetric(horizontal: 16),
+                        padding: EdgeInsets.symmetric(horizontal: 20, vertical: 8),
+                        decoration: BoxDecoration(
+                          gradient: LinearGradient(
+                            colors: [Color(0xFF8B5CF6), Color(0xFFEC4899)],
+                            begin: Alignment.centerLeft,
+                            end: Alignment.centerRight,
+                          ),
+                          borderRadius: BorderRadius.circular(12),
+                          boxShadow: [
+                            BoxShadow(
+                              color: Color(0xFF8B5CF6).withOpacity(0.3),
+                              blurRadius: 12,
+                              offset: Offset(0, 4),
+                            ),
+                          ],
+                        ),
+                        child: Center(
+                          child: Text(
+                            'TO DO LIST',
+                            style: TextStyle(
+                              fontSize: 16,
+                              fontWeight: FontWeight.bold,
+                              color: Colors.white,
+                              letterSpacing: 1,
+                            ),
                           ),
                         ),
-                        SizedBox(width: 4),
-                        Text('🔥', style: TextStyle(fontSize: 16)),
-                      ],
-                    ),
-                  ),
-                ],
-              ),
-            ),
-
-            // 🎯 Task Listesi
-            Expanded(
-              child: SingleChildScrollView(
-                padding: EdgeInsets.symmetric(horizontal: 16),
-                child: Column(
-                  children: [
-                    // One-time tasks
-                    ...sortedOneTimeTasks.map((task) => _buildTaskItem(
-                      task['id'],
-                      task['title'] ?? 'to do',
-                      completedTaskIds.contains(task['id']),
-                    )),
-                    
-                    // Ayırıcı çizgi
-                    if (sortedOneTimeTasks.isNotEmpty && sortedDailyTasks.isNotEmpty)
-                      Container(
-                        margin: EdgeInsets.symmetric(vertical: 16),
-                        height: 1,
-                        color: Colors.white24,
                       ),
+                    ),
                     
-                    // Daily tasks
-                    ...sortedDailyTasks.map((task) => _buildTaskItem(
-                      task['id'],
-                      task['title'] ?? 'daily',
-                      completedTaskIds.contains(task['id']),
-                    )),
+                    // 🔥 Streak counter
+                    Container(
+                      padding: EdgeInsets.symmetric(horizontal: 12, vertical: 8),
+                      decoration: BoxDecoration(
+                        color: Color(0xFFF59E0B),
+                        borderRadius: BorderRadius.circular(12),
+                        boxShadow: [
+                          BoxShadow(
+                            color: Color(0xFFF59E0B).withOpacity(0.3),
+                            blurRadius: 8,
+                            offset: Offset(0, 2),
+                          ),
+                        ],
+                      ),
+                      child: Center(
+                        child: Row(
+                          mainAxisSize: MainAxisSize.min,
+                          children: [
+                            Text(
+                              '$streakCount',
+                              style: TextStyle(
+                                fontSize: 16,
+                                fontWeight: FontWeight.bold,
+                                color: Colors.white,
+                              ),
+                            ),
+                            SizedBox(width: 4),
+                            Text('🔥', style: TextStyle(fontSize: 14)),
+                          ],
+                        ),
+                      ),
+                    ),
                   ],
                 ),
               ),
-            ),
 
-            // 🎯 Add Task Button
-            Padding(
-              padding: EdgeInsets.all(16),
-              child: FloatingActionButton(
-                onPressed: _showAddTaskDialog,
-                backgroundColor: Color(0xFF8B5CF6),
-                child: Icon(Icons.add, color: Colors.white, size: 32),
+              // 🎯 Task Listesi - Canva tasarımına uygun
+              Expanded(
+                child: SingleChildScrollView(
+                  padding: EdgeInsets.symmetric(horizontal: 20),
+                  child: Column(
+                    children: [
+                      SizedBox(height: 8),
+                      
+                      // One-time tasks
+                      ...sortedOneTimeTasks.map((task) => _buildTaskItem(
+                        task['id'],
+                        task['title'] ?? 'to do',
+                        completedTaskIds.contains(task['id']),
+                        false, // one-time task
+                      )),
+                      
+                      // Ayırıcı - Canva'da görünen çizgi
+                      if (sortedOneTimeTasks.isNotEmpty && sortedDailyTasks.isNotEmpty)
+                        Container(
+                          margin: EdgeInsets.symmetric(vertical: 20),
+                          height: 1,
+                          color: Color(0xFF404040),
+                        ),
+                      
+                      // Daily tasks
+                      ...sortedDailyTasks.map((task) => _buildTaskItem(
+                        task['id'],
+                        task['title'] ?? 'daily',
+                        completedTaskIds.contains(task['id']),
+                        true, // daily task
+                      )),
+                      
+                      SizedBox(height: 100), // Alt navigation için boşluk
+                    ],
+                  ),
+                ),
               ),
+            ],
+          ),
+        ),
+      ),
+      
+      // 🎯 Floating Action Button - Canva tasarımına uygun
+      floatingActionButton: Container(
+        width: 70,
+        height: 70,
+        decoration: BoxDecoration(
+          gradient: LinearGradient(
+            colors: [Color(0xFF8B5CF6), Color(0xFFEC4899)],
+            begin: Alignment.topLeft,
+            end: Alignment.bottomRight,
+          ),
+          shape: BoxShape.circle,
+          boxShadow: [
+            BoxShadow(
+              color: Color(0xFF8B5CF6).withOpacity(0.4),
+              blurRadius: 15,
+              offset: Offset(0, 6),
             ),
-
-            // 🎯 Alt Navigation Bar
-            Container(
-              height: 80,
-              color: Color(0xFF2D2D2D),
-              child: Row(
-                mainAxisAlignment: MainAxisAlignment.spaceEvenly,
-                children: [
-                  _buildNavButton(
-                    icon: Icons.check_circle,
-                    color: Color(0xFF8B5CF6),
-                    isActive: true,
-                    onTap: () {},
+          ],
+        ),
+        child: FloatingActionButton(
+          onPressed: _showAddTaskDialog,
+          backgroundColor: Colors.transparent,
+          elevation: 0,
+          child: Icon(Icons.add, color: Colors.white, size: 32),
+        ),
+      ),
+      floatingActionButtonLocation: FloatingActionButtonLocation.centerDocked,
+      
+      // Alt Navigation Bar
+      bottomNavigationBar: Container(
+        height: 90,
+        decoration: BoxDecoration(
+          color: Color(0xFF1A1A1A),
+          boxShadow: [
+            BoxShadow(
+              color: Colors.black.withOpacity(0.3),
+              blurRadius: 10,
+              offset: Offset(0, -2),
+            ),
+          ],
+        ),
+        child: Row(
+          mainAxisAlignment: MainAxisAlignment.spaceEvenly,
+          children: [
+            _buildNavButton(
+              icon: Icons.check_circle_outline,
+              color: Color(0xFF8B5CF6),
+              isActive: true,
+              onTap: () {},
+            ),
+            _buildNavButton(
+              icon: Icons.assignment_outlined,
+              color: Color(0xFF06B6D4),
+              onTap: () {
+                Navigator.push(
+                  context,
+                  MaterialPageRoute(
+                    builder: (context) => DailyScreen(userId: widget.userId),
                   ),
-                  _buildNavButton(
-                    icon: Icons.assignment,
-                    color: Color(0xFF06B6D4),
-                    onTap: () {
-                      Navigator.push(
-                        context,
-                        MaterialPageRoute(
-                          builder: (context) => DailyScreen(userId: widget.userId),
-                        ),
-                      );
-                    },
+                );
+              },
+            ),
+            SizedBox(width: 70),
+            _buildNavButton(
+              icon: Icons.person_outline,
+              color: Color(0xFFF59E0B),
+              onTap: () {
+                Navigator.push(
+                  context,
+                  MaterialPageRoute(
+                    builder: (context) => ProfileScreen(userId: widget.userId),
                   ),
-                  _buildNavButton(
-                    icon: Icons.home,
-                    color: Color(0xFFF59E0B),
-                    onTap: () {
-                      Navigator.push(
-                        context,
-                        MaterialPageRoute(
-                          builder: (context) => ProfileScreen(userId: widget.userId),
-                        ),
-                      );
-                    },
-                  ),
-                  _buildNavButton(
-                    icon: Icons.trending_up,
-                    color: Color(0xFFEC4899),
-                    onTap: () {},
-                  ),
-                ],
-              ),
+                );
+              },
+            ),
+            _buildNavButton(
+              icon: Icons.trending_up,
+              color: Color(0xFFEC4899),
+              onTap: () {},
             ),
           ],
         ),
@@ -326,46 +424,58 @@ class _TodoScreenState extends State<TodoScreen> {
     );
   }
 
-  Widget _buildTaskItem(int taskId, String title, bool isCompleted) {
+  // Task Item
+  Widget _buildTaskItem(int taskId, String title, bool isCompleted, bool isDaily) {
     return Container(
-      margin: EdgeInsets.only(bottom: 12),
+      margin: EdgeInsets.only(bottom: 16),
       child: Row(
         children: [
-          // Checkbox
           GestureDetector(
             onTap: () => _toggleTask(taskId, !isCompleted),
             child: Container(
-              width: 24,
-              height: 24,
+              width: 28,
+              height: 28,
               decoration: BoxDecoration(
-                color: isCompleted ? Color(0xFF8B5CF6) : Colors.white,
-                borderRadius: BorderRadius.circular(6),
+                color: isCompleted ? Colors.white : Colors.transparent,
+                borderRadius: BorderRadius.circular(8),
                 border: Border.all(
-                  color: isCompleted ? Color(0xFF8B5CF6) : Colors.white,
+                  color: Colors.white,
                   width: 2,
                 ),
               ),
               child: isCompleted
-                  ? Icon(Icons.check, color: Colors.white, size: 16)
+                  ? Icon(Icons.check, color: Color(0xFF1A1A1A), size: 18)
                   : null,
             ),
           ),
-          SizedBox(width: 12),
+          SizedBox(width: 16),
           
           // Task container
           Expanded(
             child: Container(
-              padding: EdgeInsets.symmetric(horizontal: 20, vertical: 16),
+              padding: EdgeInsets.symmetric(horizontal: 24, vertical: 18),
               decoration: BoxDecoration(
-                color: isCompleted ? Colors.grey[600] : Color(0xFF4F46E5),
-                borderRadius: BorderRadius.circular(12),
+                color: isCompleted 
+                    ? Color(0xFF404040) 
+                    : Color(0xFF4F46E5),
+                borderRadius: BorderRadius.circular(16),
+                boxShadow: isCompleted ? null : [
+                  BoxShadow(
+                    color: Color(0xFF4F46E5).withOpacity(0.2),
+                    blurRadius: 8,
+                    offset: Offset(0, 4),
+                  ),
+                ],
               ),
               child: Text(
                 title,
                 style: TextStyle(
                   color: Colors.white,
                   fontSize: 16,
+                  fontWeight: FontWeight.w500,
                   decoration: isCompleted ? TextDecoration.lineThrough : null,
+                  decorationColor: Colors.white,
+                  decorationThickness: 2,
                 ),
               ),
             ),
@@ -375,6 +485,7 @@ class _TodoScreenState extends State<TodoScreen> {
     );
   }
 
+  // Navigation Button  
   Widget _buildNavButton({
     required IconData icon,
     required Color color,
@@ -384,20 +495,20 @@ class _TodoScreenState extends State<TodoScreen> {
     return GestureDetector(
       onTap: onTap,
       child: Container(
-        width: 60,
-        height: 60,
+        width: 56,
+        height: 56,
         decoration: BoxDecoration(
           color: color,
           borderRadius: BorderRadius.circular(16),
           boxShadow: isActive ? [
             BoxShadow(
-              color: color.withOpacity(0.3),
-              blurRadius: 8,
+              color: color.withOpacity(0.4),
+              blurRadius: 12,
               offset: Offset(0, 4),
             ),
           ] : null,
         ),
-        child: Icon(icon, color: Colors.white, size: 28),
+        child: Icon(icon, color: Colors.white, size: 24),
       ),
     );
   }
@@ -429,13 +540,12 @@ class _AddTaskDialogState extends State<AddTaskDialog> {
         width: MediaQuery.of(context).size.width * 0.85,
         padding: EdgeInsets.all(20),
         decoration: BoxDecoration(
-          color: Color(0xFF6B7280), // Gri renk
+          color: Color(0xFF6B7280),
           borderRadius: BorderRadius.circular(20),
         ),
         child: Column(
           mainAxisSize: MainAxisSize.min,
           children: [
-            // 🎯 Başlık Input
             Container(
               padding: EdgeInsets.symmetric(horizontal: 16, vertical: 12),
               decoration: BoxDecoration(
@@ -462,7 +572,6 @@ class _AddTaskDialogState extends State<AddTaskDialog> {
             
             SizedBox(height: 16),
             
-            // 🎯 Açıklama Input (Büyük)
             Container(
               height: 120,
               padding: EdgeInsets.all(16),
@@ -491,11 +600,9 @@ class _AddTaskDialogState extends State<AddTaskDialog> {
             
             SizedBox(height: 20),
             
-            // 🎯 Alt Butonlar
             Row(
               mainAxisAlignment: MainAxisAlignment.spaceEvenly,
               children: [
-                // İptal Butonu (X)
                 GestureDetector(
                   onTap: () => Navigator.pop(context),
                   child: Container(
@@ -513,7 +620,6 @@ class _AddTaskDialogState extends State<AddTaskDialog> {
                   ),
                 ),
                 
-                // Ekle Butonu (+)
                 GestureDetector(
                   onTap: _addTask,
                   child: Container(
@@ -540,7 +646,6 @@ class _AddTaskDialogState extends State<AddTaskDialog> {
 
   Future<void> _addTask() async {
     if (_titleController.text.trim().isEmpty) {
-      // Boş başlık uyarısı
       ScaffoldMessenger.of(context).showSnackBar(
         SnackBar(
           content: Text('Lütfen görev başlığı girin'),
@@ -556,14 +661,13 @@ class _AddTaskDialogState extends State<AddTaskDialog> {
       'title': _titleController.text.trim(),
       'description': _descriptionController.text.trim(),
       'is_active': '1',
-      'type': 'one_time', // Sadece one_time görevler
+      'type': 'one_time',
       'coin_reward': 5,
     });
 
     widget.onTaskAdded();
     Navigator.pop(context);
     
-    // Başarı mesajı
     ScaffoldMessenger.of(context).showSnackBar(
       SnackBar(
         content: Text('Görev başarıyla eklendi!'),
