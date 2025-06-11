@@ -430,7 +430,7 @@ class DatabaseHelper {
     }
   }
 
-  // 🎯 Daily template silindiğinde ilgili task'ları da sil
+  // Daily template silindiğinde ilgili task'ları da sil
   Future<void> deleteDailyTemplate(int templateId) async {
     final db = await database;
     
@@ -458,7 +458,7 @@ class DatabaseHelper {
     }
   }
 
-  // 🎯 YENİ: Daily edit edilince bugünkü task'ı deaktif et
+  // YENİ: Daily edit edilince bugünkü task'ı deaktif et
   Future<void> deactivateTodayTaskForDaily(int dailyTemplateId, DateTime today) async {
     final db = await database;
     
@@ -555,6 +555,64 @@ class DatabaseHelper {
     rethrow;
   }
 }
+
+  // Yeni kullanıcıya tüm body'leri hediye et
+  Future<void> giveAllBodiesToNewUser(int userId) async {
+    final db = await instance.database;
+    
+    try {    
+      // Body kategorisinin ID'sini al
+      final bodyCategory = await db.query(
+        'categories',
+        where: 'name = ?',
+        whereArgs: ['body'],
+        limit: 1,
+      );
+      
+      if (bodyCategory.isEmpty) {
+        print("❌ Body kategorisi bulunamadı!");
+        return;
+      }
+      
+      final bodyCategoryId = bodyCategory.first['id'] as int;
+      
+      // Body kategorisindeki tüm item'ları al
+      final bodyItems = await db.query(
+        'shop_items',
+        where: 'category_id = ?',
+        whereArgs: [bodyCategoryId],
+      );
+      
+      print("🎯 ${bodyItems.length} body item'ı bulundu");
+      
+      // Her body item'ını kullanıcıya ver
+      for (var item in bodyItems) {
+        await db.insert('user_items', {
+          'user_id': userId,
+          'item_id': item['id'],
+          'purchased_at': DateTime.now().toIso8601String(),
+        });
+        
+        print("✅ Body hediye edildi: ${item['name']} (ID: ${item['id']})");
+      }
+      
+      // 🆕 İlk body'yi otomatik seç (body1)
+      final firstBody = bodyItems.where((item) => item['name'] == 'body1').firstOrNull;
+      if (firstBody != null) {
+        await db.insert('user_selected_items', {
+          'user_id': userId,
+          'item_id': firstBody['id'],
+        });
+        print("🎯 İlk body otomatik seçildi: body1");
+      }
+      
+      print("🎉 Kullanıcı $userId için tüm body'ler başarıyla hediye edildi!");
+      
+    } catch (e) {
+      print("❌ Body hediye etme hatası: $e");
+      throw e;
+    }
+  }
 
 
 
