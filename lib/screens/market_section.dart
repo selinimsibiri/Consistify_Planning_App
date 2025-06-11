@@ -13,6 +13,8 @@ class MarketSection extends StatefulWidget {
 
 class _MarketSectionState extends State<MarketSection> with TickerProviderStateMixin {
   Map<String, String> selectedItems = {};
+  Set<int> ownedItemIds = {}; // 🆕 Sahip olunan item ID'leri
+  int userCoins = 0; // 🆕 Kullanıcı coin bilgisi
   late int userId;
   late AnimationController _categoryController;
 
@@ -20,9 +22,8 @@ class _MarketSectionState extends State<MarketSection> with TickerProviderStateM
   void initState() {
     super.initState();
     userId = widget.userId;
-    _loadUserSelectedItems();
+    _loadUserData(); // 🆕 Tüm kullanıcı verilerini yükle
     
-    // 🎯 Kategori animasyonu
     _categoryController = AnimationController(
       duration: Duration(milliseconds: 300),
       vsync: this,
@@ -54,6 +55,47 @@ class _MarketSectionState extends State<MarketSection> with TickerProviderStateM
 
   String selectedCategory = 'body';
 
+  // 🆕 Tüm kullanıcı verilerini yükle
+  Future<void> _loadUserData() async {
+    await _loadUserSelectedItems();
+    await _loadUserOwnedItems();
+    await _loadUserCoins();
+  }
+
+  // 🆕 Kullanıcının sahip olduğu itemleri yükle
+  Future<void> _loadUserOwnedItems() async {
+    final db = await DatabaseHelper.instance.database;
+    final result = await db.query(
+      'user_items',
+      columns: ['item_id'],
+      where: 'user_id = ?',
+      whereArgs: [userId],
+    );
+
+    setState(() {
+      ownedItemIds = result.map((row) => row['item_id'] as int).toSet();
+    });
+    
+    print('🛒 Sahip olunan itemler: $ownedItemIds');
+  }
+
+  // 🆕 Kullanıcının coin bilgisini yükle
+  Future<void> _loadUserCoins() async {
+    final db = await DatabaseHelper.instance.database;
+    final result = await db.query(
+      'users',
+      columns: ['coins'],
+      where: 'id = ?',
+      whereArgs: [userId],
+    );
+
+    if (result.isNotEmpty) {
+      setState(() {
+        userCoins = result.first['coins'] as int? ?? 0;
+      });
+    }
+  }
+
   Future<void> _loadUserSelectedItems() async {
     final db = await DatabaseHelper.instance.database;
     final result = await db.rawQuery('''
@@ -80,6 +122,205 @@ class _MarketSectionState extends State<MarketSection> with TickerProviderStateM
       'shop_items',
       where: 'category_id = ?',
       whereArgs: [categoryIds[selectedCategory]],
+    );
+  }
+
+  // 🆕 Item satın alma popup'ı
+  void _showPurchaseDialog(Map<String, dynamic> item) {
+    final itemName = item['name'] as String;
+    final itemPrice = item['price'] as int;
+    final itemId = item['id'] as int;
+    final bool canAfford = userCoins >= itemPrice; // 🆕 Satın alabilir mi kontrolü
+
+    showDialog(
+      context: context,
+      barrierDismissible: true, // 🆕 Her durumda dışarı tıklayarak kapanabilir
+      builder: (BuildContext context) {
+        return AlertDialog(
+          backgroundColor: Color(0xFF2D2D2D),
+          shape: RoundedRectangleBorder(
+            borderRadius: BorderRadius.circular(20),
+          ),
+          title: Row(
+            children: [
+              Container(
+                padding: EdgeInsets.all(8),
+                decoration: BoxDecoration(
+                  gradient: LinearGradient(
+                    colors: canAfford 
+                        ? [Color(0xFF8B5CF6), Color(0xFF7C3AED)]
+                        : [Color(0xFFEF4444), Color(0xFFDC2626)], // 🆕 Yetersizse kırmızı
+                  ),
+                  borderRadius: BorderRadius.circular(12),
+                ),
+                child: Icon(
+                  canAfford ? Icons.shopping_cart : Icons.money_off, // 🆕 İkon değişimi
+                  color: Colors.white, 
+                  size: 20,
+                ),
+              ),
+              SizedBox(width: 12),
+              Text(
+                canAfford ? 'Satın Al' : 'Yetersiz Coin', // 🆕 Başlık değişimi
+                style: TextStyle(color: Colors.white, fontSize: 18),
+              ),
+            ],
+          ),
+          content: Column(
+            mainAxisSize: MainAxisSize.min,
+            children: [
+              // Item görseli
+              Container(
+                width: 80,
+                height: 80,
+                decoration: BoxDecoration(
+                  color: Color(0xFF404040),
+                  borderRadius: BorderRadius.circular(16),
+                ),
+                child: ClipRRect(
+                  borderRadius: BorderRadius.circular(16),
+                  child: Image.asset(
+                    'assets/items/$selectedCategory/$itemName.png',
+                    fit: BoxFit.cover,
+                  ),
+                ),
+              ),
+              SizedBox(height: 16),
+              Text(
+                '$itemName',
+                style: TextStyle(
+                  color: Colors.white,
+                  fontSize: 16,
+                  fontWeight: FontWeight.bold,
+                ),
+              ),
+              SizedBox(height: 8),
+              Row(
+                mainAxisAlignment: MainAxisAlignment.center,
+                children: [
+                  Text(
+                    '$itemPrice',
+                    style: TextStyle(
+                      color: Color(0xFFF59E0B),
+                      fontSize: 18,
+                      fontWeight: FontWeight.bold,
+                    ),
+                  ),
+                  SizedBox(width: 4),
+                  Text('🪙', style: TextStyle(fontSize: 16)),
+                ],
+              ),
+              SizedBox(height: 12),
+              // Coin durumu
+              Container(
+                padding: EdgeInsets.symmetric(horizontal: 12, vertical: 8),
+                decoration: BoxDecoration(
+                  color: canAfford 
+                      ? Color(0xFF10B981).withOpacity(0.2)
+                      : Color(0xFFEF4444).withOpacity(0.2),
+                  borderRadius: BorderRadius.circular(8),
+                  border: Border.all(
+                    color: canAfford 
+                        ? Color(0xFF10B981)
+                        : Color(0xFFEF4444),
+                  ),
+                ),
+                child: Text(
+                  canAfford 
+                      ? 'Yeterli coin var! 💰'
+                      : 'Yetersiz coin! 😔',
+                  style: TextStyle(
+                    color: canAfford 
+                        ? Color(0xFF10B981)
+                        : Color(0xFFEF4444),
+                    fontWeight: FontWeight.bold,
+                  ),
+                ),
+              ),
+            ],
+          ),
+          // 🆕 Actions - Sadece coin yeterliyse tek buton
+          actions: canAfford ? [
+            // 🆕 Sadece Satın Al butonu - İptal butonu kaldırıldı
+            Container(
+              width: double.infinity,
+              child: ElevatedButton(
+                onPressed: () async {
+                  Navigator.of(context).pop();
+                  await _purchaseItem(itemId, itemPrice);
+                },
+                style: ElevatedButton.styleFrom(
+                  backgroundColor: Color(0xFF8B5CF6),
+                  shape: RoundedRectangleBorder(
+                    borderRadius: BorderRadius.circular(12),
+                  ),
+                  padding: EdgeInsets.symmetric(vertical: 12),
+                ),
+                child: Text(
+                  'Satın Al 🛒',
+                  style: TextStyle(
+                    color: Colors.white,
+                    fontSize: 16,
+                    fontWeight: FontWeight.bold,
+                  ),
+                ),
+              ),
+            ),
+          ] : null, // 🆕 Coin yetersizse hiç buton gösterme
+        );
+      },
+    );
+  }
+
+
+
+  // 🆕 Item satın alma işlemi
+  Future<void> _purchaseItem(int itemId, int itemPrice) async {
+    try {
+      final db = await DatabaseHelper.instance.database;
+      
+      await db.transaction((txn) async {
+        // 1. Kullanıcının coin'ini düşür
+        await txn.update(
+          'users',
+          {'coins': userCoins - itemPrice},
+          where: 'id = ?',
+          whereArgs: [userId],
+        );
+        
+        // 2. Item'i kullanıcının envanterine ekle
+        await txn.insert('user_items', {
+          'user_id': userId,
+          'item_id': itemId,
+        });
+      });
+      
+      // 3. UI'ı güncelle
+      await _loadUserData();
+      
+      // 4. Başarı mesajı
+      _showSnackBar('✅ Item başarıyla satın alındı!', Colors.green);
+      
+      print('✅ Item satın alındı: $itemId, Kalan coin: ${userCoins - itemPrice}');
+      
+    } catch (e) {
+      _showSnackBar('❌ Satın alma hatası: $e', Colors.red);
+      print('❌ Satın alma hatası: $e');
+    }
+  }
+
+  // 🆕 SnackBar gösterici
+  void _showSnackBar(String message, Color color) {
+    ScaffoldMessenger.of(context).showSnackBar(
+      SnackBar(
+        content: Text(message),
+        backgroundColor: color,
+        duration: Duration(seconds: 2),
+        behavior: SnackBarBehavior.floating,
+        shape: RoundedRectangleBorder(
+          borderRadius: BorderRadius.circular(10),
+        ),
+      ),
     );
   }
 
@@ -110,7 +351,7 @@ class _MarketSectionState extends State<MarketSection> with TickerProviderStateM
       child: Column(
         crossAxisAlignment: CrossAxisAlignment.start,
         children: [
-          // 🎯 Market başlığı
+          // Market başlığı
           Padding(
             padding: EdgeInsets.all(20),
             child: Row(
@@ -139,11 +380,37 @@ class _MarketSectionState extends State<MarketSection> with TickerProviderStateM
                     letterSpacing: 1.5,
                   ),
                 ),
+                Spacer(),
+                // 🆕 Coin göstergesi
+                Container(
+                  padding: EdgeInsets.symmetric(horizontal: 12, vertical: 6),
+                  decoration: BoxDecoration(
+                    gradient: LinearGradient(
+                      colors: [Color(0xFFF59E0B), Color(0xFFD97706)],
+                    ),
+                    borderRadius: BorderRadius.circular(8),
+                  ),
+                  child: Row(
+                    mainAxisSize: MainAxisSize.min,
+                    children: [
+                      Text(
+                        '$userCoins',
+                        style: TextStyle(
+                          fontSize: 14,
+                          fontWeight: FontWeight.bold,
+                          color: Colors.white,
+                        ),
+                      ),
+                      SizedBox(width: 4),
+                      Text('🪙', style: TextStyle(fontSize: 12)),
+                    ],
+                  ),
+                ),
               ],
             ),
           ),
           
-          // 🎯 Kategori Butonları - Geliştirilmiş
+          // Kategori Butonları
           Container(
             height: 70,
             margin: EdgeInsets.only(bottom: 16),
@@ -222,7 +489,7 @@ class _MarketSectionState extends State<MarketSection> with TickerProviderStateM
             ),
           ),
 
-          // 🎯 Grid Items - Geliştirilmiş
+          // 🎯 Grid Items - YENİ LOCK SİSTEMİ
           Expanded(
             child: Padding(
               padding: const EdgeInsets.symmetric(horizontal: 16),
@@ -287,11 +554,21 @@ class _MarketSectionState extends State<MarketSection> with TickerProviderStateM
                     ),
                     itemBuilder: (context, index) {
                       final item = items[index];
+                      final itemId = item['id'] as int;
+                      final itemPrice = item['price'] as int;
                       String imagePath = 'assets/items/$selectedCategory/${item['name']}.png';
                       bool isItemSelected = selectedItems[selectedCategory] == imagePath;
+                      bool isOwned = ownedItemIds.contains(itemId); // 🆕 Sahiplik kontrolü
 
                       return GestureDetector(
                         onTap: () async {
+                          if (!isOwned) {
+                            // 🆕 Kilitli item - satın alma popup'ı göster
+                            _showPurchaseDialog(item);
+                            return;
+                          }
+
+                          // Sahip olunan item - normal seçim işlemi
                           final db = await DatabaseHelper.instance.database;
 
                           await db.delete(
@@ -313,47 +590,116 @@ class _MarketSectionState extends State<MarketSection> with TickerProviderStateM
                             selectedItems[selectedCategory] = imagePath;
                           });
                         },
-                        child: AnimatedContainer(
-                          duration: Duration(milliseconds: 300),
-                          decoration: BoxDecoration(
-                            gradient: isItemSelected 
-                                ? LinearGradient(
-                                    colors: [
-                                      Color(0xFF8B5CF6).withOpacity(0.3),
-                                      Color(0xFF7C3AED).withOpacity(0.3),
+                        child: Stack(
+                          children: [
+                            // Ana container
+                            AnimatedContainer(
+                              duration: Duration(milliseconds: 300),
+                              decoration: BoxDecoration(
+                                gradient: isItemSelected 
+                                    ? LinearGradient(
+                                        colors: [
+                                          Color(0xFF8B5CF6).withOpacity(0.3),
+                                          Color(0xFF7C3AED).withOpacity(0.3),
+                                        ],
+                                      )
+                                    : null,
+                                color: isItemSelected ? null : Color(0xFF6B6B6B),
+                                borderRadius: BorderRadius.circular(16),
+                                border: Border.all(
+                                  color: isItemSelected
+                                      ? Color(0xFF8B5CF6)
+                                      : Colors.transparent,
+                                  width: 3,
+                                ),
+                                boxShadow: isItemSelected ? [
+                                  BoxShadow(
+                                    color: Color(0xFF8B5CF6).withOpacity(0.4),
+                                    blurRadius: 12,
+                                    offset: Offset(0, 4),
+                                  ),
+                                ] : [
+                                  BoxShadow(
+                                    color: Colors.black.withOpacity(0.2),
+                                    blurRadius: 8,
+                                    offset: Offset(0, 2),
+                                  ),
+                                ],
+                              ),
+                              padding: const EdgeInsets.all(8),
+                              child: ClipRRect(
+                                borderRadius: BorderRadius.circular(12),
+                                child: Image.asset(
+                                  imagePath,
+                                  fit: BoxFit.cover,
+                                  width: double.infinity,
+                                  height: double.infinity,
+                                ),
+                              ),
+                            ),
+                            
+                            // 🆕 Sol üst köşe - Kilit ikonu (sadece kilitli itemlerde)
+                            if (!isOwned)
+                              Positioned(
+                                top: 4,
+                                left: 4,
+                                child: Container(
+                                  width: 24,
+                                  height: 24,
+                                  decoration: BoxDecoration(
+                                    color: Colors.black.withOpacity(0.8),
+                                    borderRadius: BorderRadius.circular(12),
+                                    border: Border.all(
+                                      color: Colors.white.withOpacity(0.3),
+                                      width: 1,
+                                    ),
+                                  ),
+                                  child: Icon(
+                                    Icons.lock,
+                                    color: Colors.white,
+                                    size: 14,
+                                  ),
+                                ),
+                              ),
+                            
+                            // 🆕 Sağ üst köşe - Fiyat etiketi (sadece kilitli itemlerde)
+                            if (!isOwned)
+                              Positioned(
+                                top: 4,
+                                right: 4,
+                                child: Container(
+                                  padding: EdgeInsets.symmetric(horizontal: 6, vertical: 3),
+                                  decoration: BoxDecoration(
+                                    gradient: LinearGradient(
+                                      colors: [Color(0xFFF59E0B), Color(0xFFD97706)],
+                                    ),
+                                    borderRadius: BorderRadius.circular(8),
+                                    boxShadow: [
+                                      BoxShadow(
+                                        color: Colors.black.withOpacity(0.4),
+                                        blurRadius: 4,
+                                        offset: Offset(0, 2),
+                                      ),
                                     ],
-                                  )
-                                : null,
-                            color: isItemSelected ? null : Color(0xFF6B6B6B),
-                            borderRadius: BorderRadius.circular(16),
-                            border: Border.all(
-                              color: isItemSelected
-                                  ? Color(0xFF8B5CF6)
-                                  : Colors.transparent,
-                              width: 3,
-                            ),
-                            boxShadow: isItemSelected ? [
-                              BoxShadow(
-                                color: Color(0xFF8B5CF6).withOpacity(0.4),
-                                blurRadius: 12,
-                                offset: Offset(0, 4),
+                                  ),
+                                  child: Row(
+                                    mainAxisSize: MainAxisSize.min,
+                                    children: [
+                                      Text(
+                                        '$itemPrice',
+                                        style: TextStyle(
+                                          fontSize: 10,
+                                          fontWeight: FontWeight.bold,
+                                          color: Colors.white,
+                                        ),
+                                      ),
+                                      SizedBox(width: 2),
+                                      Text('🪙', style: TextStyle(fontSize: 8)),
+                                    ],
+                                  ),
+                                ),
                               ),
-                            ] : [
-                              BoxShadow(
-                                color: Colors.black.withOpacity(0.2),
-                                blurRadius: 8,
-                                offset: Offset(0, 2),
-                              ),
-                            ],
-                          ),
-                          padding: const EdgeInsets.all(8),
-                          child: ClipRRect(
-                            borderRadius: BorderRadius.circular(12),
-                            child: Image.asset(
-                              imagePath,
-                              fit: BoxFit.cover,
-                            ),
-                          ),
+                          ],
                         ),
                       );
                     },
@@ -362,8 +708,9 @@ class _MarketSectionState extends State<MarketSection> with TickerProviderStateM
               ),
             ),
           ),
+
           
-          SizedBox(height: 16), // Alt boşluk
+          SizedBox(height: 16),
         ],
       ),
     );

@@ -59,6 +59,9 @@ class _SignUpPageState extends State<SignUpPage> {
       );
     } else {
       print("✅ Kayıt başarılı! User ID: $result");
+
+      // 🆕 YENİ: Kullanıcıya tüm body'leri hediye et!
+      await DatabaseHelper.instance.giveAllBodiesToNewUser(result);
       
       // Kayıt sonrası giriş durumunu kaydediyoruz
       await AuthService.saveLoginState(

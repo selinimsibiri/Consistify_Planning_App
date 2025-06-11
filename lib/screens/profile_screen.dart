@@ -76,8 +76,9 @@ class _ProfileScreenState extends State<ProfileScreen> {
       selectedItems[category] = imagePath;
     });
     // Market'ten item seçildiğinde coin bilgisini güncelle
-    _loadUserCoins(); //buraya bakalım market bölümünü yaparken imdat
+    _loadUserCoins(); // 🆕 Coin bilgisini yenile
   }
+
 
   @override
   Widget build(BuildContext context) {
