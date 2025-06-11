@@ -3,6 +3,7 @@ import 'package:flutter/services.dart';
 import 'package:sayfa_yonlendirme/db/database_helper.dart';
 import 'package:sayfa_yonlendirme/screens/daily_screen.dart';
 import 'package:sayfa_yonlendirme/screens/profile_screen.dart';
+import 'package:sayfa_yonlendirme/widgets/animations/coin_animation_overlay.dart';
 
 class TodoScreen extends StatefulWidget {
   final int userId;
@@ -117,6 +118,8 @@ class _TodoScreenState extends State<TodoScreen> {
           userCoins += coinReward;
         });
 
+        // Coin animasyonunu göster
+        CoinAnimationOverlay.showCoinDrop(context, coinReward);
         print('💰 Coin ödülü verildi: +$coinReward');
       }
     } else {
@@ -338,7 +341,7 @@ class _TodoScreenState extends State<TodoScreen> {
         ),
       ),
       
-      // 🎯 Floating Action Button - Canva tasarımına uygun
+      // Floating Action Button
       floatingActionButton: Container(
         width: 70,
         height: 70,
