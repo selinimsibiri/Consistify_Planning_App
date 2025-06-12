@@ -144,7 +144,7 @@ class _TodoScreenState extends State<TodoScreen> {
   void _showAddTaskDialog() {
     showDialog(
       context: context,
-      barrierDismissible: false,
+      barrierDismissible: true, // 🔧 Dışarıya tıklayınca kapanır
       builder: (BuildContext context) {
         return AddTaskDialog(
           userId: widget.userId,
@@ -153,6 +153,7 @@ class _TodoScreenState extends State<TodoScreen> {
       },
     );
   }
+
 
   List<Map<String, dynamic>> _sortTasks(List<Map<String, dynamic>> tasks) {
     final notCompleted = tasks.where((task) => 
@@ -185,191 +186,205 @@ class _TodoScreenState extends State<TodoScreen> {
           ),
         ),
       ),
-      body: Container(
-        decoration: BoxDecoration(
-          gradient: LinearGradient(
-            begin: Alignment.topCenter,
-            end: Alignment.bottomCenter,
-            colors: [
-              Color.fromARGB(255, 46, 46, 46), // Tek renk
-            ],
-            stops: [1.0],
-          ),
-        ),
-        child: SafeArea(
-          child: Column(
-            children: [
-              // 🎯 Üst Bar - Alt navigation ile aynı arka plan
-              Container(
-                decoration: BoxDecoration(
-                  color: Color(0xFF1A1A1A), // Alt navigation ile aynı renk
-                  boxShadow: [
-                    BoxShadow(
-                      color: Colors.black.withOpacity(0.3),
-                      blurRadius: 10,
-                      offset: Offset(0, 2), // Aşağı doğru gölge
-                    ),
-                  ],
-                ),
-                padding: EdgeInsets.symmetric(horizontal: 20, vertical: 16),
-                child: Row(
-                  children: [
-                    // ⚙️ Settings icon
-                    Container(
-                      width: 40,
-                      height: 40,
-                      decoration: BoxDecoration(
-                        color: Color(0xFF404040),
-                        borderRadius: BorderRadius.circular(12),
-                      ),
-                      child: Icon(
-                        Icons.settings,
-                        color: Colors.white,
-                        size: 20,
-                      ),
-                    ),
-                    
-                    // 📝 TO DO LIST başlığı - Dinamik genişlik
-                    Expanded(
-                      child: Container(
-                        margin: EdgeInsets.symmetric(horizontal: 16),
-                        padding: EdgeInsets.symmetric(horizontal: 20, vertical: 8),
-                        decoration: BoxDecoration(
-                          gradient: LinearGradient(
-                            colors: [Color(0xFF8B5CF6), Color(0xFFEC4899)],
-                            begin: Alignment.centerLeft,
-                            end: Alignment.centerRight,
-                          ),
-                          borderRadius: BorderRadius.circular(12),
-                          boxShadow: [
-                            BoxShadow(
-                              color: Color(0xFF8B5CF6).withOpacity(0.3),
-                              blurRadius: 12,
-                              offset: Offset(0, 4),
-                            ),
-                          ],
+      body: Stack( // Stack eklendi
+        children: [
+          Container(
+            decoration: BoxDecoration(
+              gradient: LinearGradient(
+                begin: Alignment.topCenter,
+                end: Alignment.bottomCenter,
+                colors: [
+                  Color.fromARGB(255, 46, 46, 46), // Tek renk
+                ],
+                stops: [1.0],
+              ),
+            ),
+            child: SafeArea(
+              child: Column(
+                children: [
+                  // 🎯 Üst Bar - Alt navigation ile aynı arka plan
+                  Container(
+                    decoration: BoxDecoration(
+                      color: Color(0xFF1A1A1A), // Alt navigation ile aynı renk
+                      boxShadow: [
+                        BoxShadow(
+                          color: Colors.black.withOpacity(0.3),
+                          blurRadius: 10,
+                          offset: Offset(0, 2), // Aşağı doğru gölge
                         ),
-                        child: Center(
-                          child: Text(
-                            'TO DO LIST',
-                            style: TextStyle(
-                              fontSize: 16,
-                              fontWeight: FontWeight.bold,
+                      ],
+                    ),
+                    padding: EdgeInsets.symmetric(horizontal: 20, vertical: 16),
+                    child: Row(
+                      children: [
+                        // 🚪 Logout icon
+                        Container(
+                          width: 40,
+                          height: 40,
+                          decoration: BoxDecoration(
+                            color: Color(0xFF404040),
+                            borderRadius: BorderRadius.circular(12),
+                          ),
+                          child: Center(
+                            child: Icon(
+                              Icons.logout,
                               color: Colors.white,
-                              letterSpacing: 1,
+                              size: 20,
                             ),
                           ),
                         ),
-                      ),
-                    ),
-                    
-                    // 🔥 Streak counter
-                    Container(
-                      padding: EdgeInsets.symmetric(horizontal: 12, vertical: 8),
-                      decoration: BoxDecoration(
-                        color: Color(0xFFF59E0B),
-                        borderRadius: BorderRadius.circular(12),
-                        boxShadow: [
-                          BoxShadow(
-                            color: Color(0xFFF59E0B).withOpacity(0.3),
-                            blurRadius: 8,
-                            offset: Offset(0, 2),
-                          ),
-                        ],
-                      ),
-                      child: Center(
-                        child: Row(
-                          mainAxisSize: MainAxisSize.min,
-                          children: [
-                            Text(
-                              '$streakCount',
-                              style: TextStyle(
-                                fontSize: 16,
-                                fontWeight: FontWeight.bold,
-                                color: Colors.white,
+                        
+                        // 📝 TO DO LIST başlığı - Dinamik genişlik
+                        Expanded(
+                          child: Container(
+                            margin: EdgeInsets.symmetric(horizontal: 16),
+                            padding: EdgeInsets.symmetric(horizontal: 20, vertical: 8),
+                            decoration: BoxDecoration(
+                              gradient: LinearGradient(
+                                colors: [Color(0xFF8B5CF6), Color(0xFFEC4899)],
+                                begin: Alignment.centerLeft,
+                                end: Alignment.centerRight,
+                              ),
+                              borderRadius: BorderRadius.circular(12),
+                              boxShadow: [
+                                BoxShadow(
+                                  color: Color(0xFF8B5CF6).withOpacity(0.3),
+                                  blurRadius: 12,
+                                  offset: Offset(0, 4),
+                                ),
+                              ],
+                            ),
+                            child: Center(
+                              child: Text(
+                                'TO DO LIST',
+                                style: TextStyle(
+                                  fontSize: 16,
+                                  fontWeight: FontWeight.bold,
+                                  color: Colors.white,
+                                  letterSpacing: 1,
+                                ),
                               ),
                             ),
-                            SizedBox(width: 4),
-                            Text('🔥', style: TextStyle(fontSize: 14)),
-                          ],
+                          ),
                         ),
+                        
+                        // 🔥 Streak counter
+                        Container(
+                          padding: EdgeInsets.symmetric(horizontal: 12, vertical: 8),
+                          decoration: BoxDecoration(
+                            color: Color(0xFFF59E0B),
+                            borderRadius: BorderRadius.circular(12),
+                            boxShadow: [
+                              BoxShadow(
+                                color: Color(0xFFF59E0B).withOpacity(0.3),
+                                blurRadius: 8,
+                                offset: Offset(0, 2),
+                              ),
+                            ],
+                          ),
+                          child: Center(
+                            child: Row(
+                              mainAxisSize: MainAxisSize.min,
+                              children: [
+                                Text(
+                                  '$streakCount',
+                                  style: TextStyle(
+                                    fontSize: 16,
+                                    fontWeight: FontWeight.bold,
+                                    color: Colors.white,
+                                  ),
+                                ),
+                                SizedBox(width: 4),
+                                Text('🔥', style: TextStyle(fontSize: 14)),
+                              ],
+                            ),
+                          ),
+                        ),
+                      ],
+                    ),
+                  ),
+
+                  // 🎯 Task Listesi - Canva tasarımına uygun
+                  Expanded(
+                    child: SingleChildScrollView(
+                      padding: EdgeInsets.symmetric(horizontal: 20),
+                      child: Column(
+                        children: [
+                          SizedBox(height: 8),
+                          
+                          // One-time tasks
+                          ...sortedOneTimeTasks.map((task) => _buildTaskItem(
+                            task['id'],
+                            task['title'] ?? 'to do',
+                            completedTaskIds.contains(task['id']),
+                            false, // one-time task
+                          )),
+                          
+                          // Ayırıcı - Canva'da görünen çizgi
+                          if (sortedOneTimeTasks.isNotEmpty && sortedDailyTasks.isNotEmpty)
+                            Container(
+                              margin: EdgeInsets.symmetric(vertical: 20),
+                              height: 1,
+                              color: Color(0xFF404040),
+                            ),
+                          
+                          // Daily tasks
+                          ...sortedDailyTasks.map((task) => _buildTaskItem(
+                            task['id'],
+                            task['title'] ?? 'daily',
+                            completedTaskIds.contains(task['id']),
+                            true, // daily task
+                          )),
+                          
+                          SizedBox(height: 100), // Alt navigation için boşluk
+                        ],
                       ),
+                    ),
+                  ),
+                ],
+              ),
+            ),
+          ),
+          
+          // 🆕 Sağ alt köşede + butonu - Alt bara bitişik
+          Positioned(
+            right: 0, // 🔧 Sağa tam bitişik
+            bottom: 90, // 🔧 Alt barın hemen üstü
+            child: GestureDetector(
+              onTap: _showAddTaskDialog,
+              child: Container(
+                width: 70,
+                height: 65,
+                decoration: BoxDecoration(
+                  gradient: LinearGradient(
+                    colors: [Color(0xFF8B5CF6), Color(0xFFEC4899)],
+                    begin: Alignment.topLeft,
+                    end: Alignment.bottomRight,
+                  ),
+                  borderRadius: BorderRadius.only(
+                    topLeft: Radius.circular(30), // 🔧 Sadece sol üst köşe yuvarlak
+                    bottomLeft: Radius.circular(30), // 🔧 Sadece sol alt köşe yuvarlak
+                  ),
+                  boxShadow: [
+                    BoxShadow(
+                      color: Color(0xFF8B5CF6).withOpacity(0.4),
+                      blurRadius: 15,
+                      offset: Offset(-3, 0), // 🔧 Sola doğru gölge
                     ),
                   ],
                 ),
-              ),
-
-              // 🎯 Task Listesi - Canva tasarımına uygun
-              Expanded(
-                child: SingleChildScrollView(
-                  padding: EdgeInsets.symmetric(horizontal: 20),
-                  child: Column(
-                    children: [
-                      SizedBox(height: 8),
-                      
-                      // One-time tasks
-                      ...sortedOneTimeTasks.map((task) => _buildTaskItem(
-                        task['id'],
-                        task['title'] ?? 'to do',
-                        completedTaskIds.contains(task['id']),
-                        false, // one-time task
-                      )),
-                      
-                      // Ayırıcı - Canva'da görünen çizgi
-                      if (sortedOneTimeTasks.isNotEmpty && sortedDailyTasks.isNotEmpty)
-                        Container(
-                          margin: EdgeInsets.symmetric(vertical: 20),
-                          height: 1,
-                          color: Color(0xFF404040),
-                        ),
-                      
-                      // Daily tasks
-                      ...sortedDailyTasks.map((task) => _buildTaskItem(
-                        task['id'],
-                        task['title'] ?? 'daily',
-                        completedTaskIds.contains(task['id']),
-                        true, // daily task
-                      )),
-                      
-                      SizedBox(height: 100), // Alt navigation için boşluk
-                    ],
-                  ),
+                child: Icon(
+                  Icons.add,
+                  color: Colors.white,
+                  size: 36,
                 ),
               ),
-            ],
-          ),
-        ),
-      ),
-      
-      // Floating Action Button
-      floatingActionButton: Container(
-        width: 70,
-        height: 70,
-        decoration: BoxDecoration(
-          gradient: LinearGradient(
-            colors: [Color(0xFF8B5CF6), Color(0xFFEC4899)],
-            begin: Alignment.topLeft,
-            end: Alignment.bottomRight,
-          ),
-          shape: BoxShape.circle,
-          boxShadow: [
-            BoxShadow(
-              color: Color(0xFF8B5CF6).withOpacity(0.4),
-              blurRadius: 15,
-              offset: Offset(0, 6),
             ),
-          ],
-        ),
-        child: FloatingActionButton(
-          onPressed: _showAddTaskDialog,
-          backgroundColor: Colors.transparent,
-          elevation: 0,
-          child: Icon(Icons.add, color: Colors.white, size: 32),
-        ),
+          ),
+        ],
       ),
-      floatingActionButtonLocation: FloatingActionButtonLocation.centerDocked,
       
-      // Alt Navigation Bar
+      // 🆕 Alt Navigation Bar - 5 buton
       bottomNavigationBar: Container(
         height: 90,
         decoration: BoxDecoration(
@@ -383,7 +398,7 @@ class _TodoScreenState extends State<TodoScreen> {
           ],
         ),
         child: Row(
-          mainAxisAlignment: MainAxisAlignment.spaceEvenly,
+          mainAxisAlignment: MainAxisAlignment.spaceEvenly, // 🔧 5 buton eşit dağılım
           children: [
             _buildNavButton(
               icon: Icons.check_circle_outline,
@@ -403,7 +418,21 @@ class _TodoScreenState extends State<TodoScreen> {
                 );
               },
             ),
-            SizedBox(width: 70),
+            // 🆕 Yeni Ajanda/Planlama butonu - Ortada
+            _buildNavButton(
+              icon: Icons.schedule,
+              color: Color(0xFF10B981), // 🟢 Yeşil renk
+              onTap: () {
+                // TODO: Ajanda/Planlama sayfasına git
+                print('📅 Ajanda sayfasına gidilecek');
+                ScaffoldMessenger.of(context).showSnackBar(
+                  SnackBar(
+                    content: Text('📅 Ajanda özelliği yakında gelecek!'),
+                    backgroundColor: Color(0xFF10B981),
+                  ),
+                );
+              },
+            ),
             _buildNavButton(
               icon: Icons.person_outline,
               color: Color(0xFFF59E0B),
@@ -534,6 +563,7 @@ class AddTaskDialog extends StatefulWidget {
 class _AddTaskDialogState extends State<AddTaskDialog> {
   final _titleController = TextEditingController();
   final _descriptionController = TextEditingController();
+  double _coinReward = 3.0; // 🆕 Default 3 coins
 
   @override
   Widget build(BuildContext context) {
@@ -541,105 +571,256 @@ class _AddTaskDialogState extends State<AddTaskDialog> {
       backgroundColor: Colors.transparent,
       child: Container(
         width: MediaQuery.of(context).size.width * 0.85,
-        padding: EdgeInsets.all(20),
+        padding: EdgeInsets.all(24),
         decoration: BoxDecoration(
-          color: Color(0xFF6B7280),
-          borderRadius: BorderRadius.circular(20),
+          color: Color(0xFF2D2D2D),
+          borderRadius: BorderRadius.circular(24),
+          boxShadow: [
+            BoxShadow(
+              color: Colors.black.withOpacity(0.3),
+              blurRadius: 20,
+              offset: Offset(0, 8),
+            ),
+          ],
         ),
         child: Column(
           mainAxisSize: MainAxisSize.min,
           children: [
+            // 🎯 Title Input - Küçültülmüş boyut
             Container(
-              padding: EdgeInsets.symmetric(horizontal: 16, vertical: 12),
+              padding: EdgeInsets.symmetric(horizontal: 16, vertical: 12), // 🔧 Padding küçültüldü
               decoration: BoxDecoration(
-                color: Colors.white,
-                borderRadius: BorderRadius.circular(12),
+                color: Color(0xFFF8F9FA),
+                borderRadius: BorderRadius.circular(16),
+                border: Border.all(
+                  color: Color(0xFF8B5CF6).withOpacity(0.2),
+                  width: 1,
+                ),
               ),
               child: TextField(
                 controller: _titleController,
                 style: TextStyle(
-                  color: Colors.black,
+                  color: Color(0xFF1A1A1A),
                   fontSize: 16,
-                  fontWeight: FontWeight.w500,
+                  fontWeight: FontWeight.w600,
                 ),
                 decoration: InputDecoration(
-                  hintText: 'to do name',
+                  hintText: 'Task title...',
                   hintStyle: TextStyle(
-                    color: Colors.black54,
+                    color: Color(0xFF6B7280),
                     fontSize: 16,
+                    fontWeight: FontWeight.w400,
                   ),
                   border: InputBorder.none,
-                ),
-              ),
-            ),
-            
-            SizedBox(height: 16),
-            
-            Container(
-              height: 120,
-              padding: EdgeInsets.all(16),
-              decoration: BoxDecoration(
-                color: Colors.white,
-                borderRadius: BorderRadius.circular(12),
-              ),
-              child: TextField(
-                controller: _descriptionController,
-                maxLines: null,
-                expands: true,
-                style: TextStyle(
-                  color: Colors.black,
-                  fontSize: 16,
-                ),
-                decoration: InputDecoration(
-                  hintText: 'info',
-                  hintStyle: TextStyle(
-                    color: Colors.black54,
-                    fontSize: 16,
-                  ),
-                  border: InputBorder.none,
+                  contentPadding: EdgeInsets.zero,
+                  isDense: true, // 🔧 Daha kompakt
                 ),
               ),
             ),
             
             SizedBox(height: 20),
             
-            Row(
-              mainAxisAlignment: MainAxisAlignment.spaceEvenly,
-              children: [
-                GestureDetector(
-                  onTap: () => Navigator.pop(context),
-                  child: Container(
-                    width: 50,
-                    height: 50,
-                    decoration: BoxDecoration(
-                      color: Color(0xFF4B5563),
-                      shape: BoxShape.circle,
+            // 🎯 Description Input - Biraz büyütülmüş
+            Container(
+              height: 120, // 🔧 100'den 120'ye çıkarıldı
+              padding: EdgeInsets.all(16), // 🔧 Padding küçültüldü
+              decoration: BoxDecoration(
+                color: Color(0xFFF8F9FA),
+                borderRadius: BorderRadius.circular(16),
+                border: Border.all(
+                  color: Color(0xFF8B5CF6).withOpacity(0.2),
+                  width: 1,
+                ),
+              ),
+              child: TextField(
+                controller: _descriptionController,
+                maxLines: null,
+                expands: true,
+                style: TextStyle(
+                  color: Color(0xFF1A1A1A),
+                  fontSize: 15,
+                ),
+                decoration: InputDecoration(
+                  hintText: 'Task description (optional)...',
+                  hintStyle: TextStyle(
+                    color: Color(0xFF6B7280),
+                    fontSize: 15,
+                  ),
+                  border: InputBorder.none,
+                  contentPadding: EdgeInsets.zero,
+                ),
+              ),
+            ),
+            
+            SizedBox(height: 24),
+            
+            // 🆕 COIN SELECTION SECTION
+            Container(
+              padding: EdgeInsets.all(20),
+              decoration: BoxDecoration(
+                gradient: LinearGradient(
+                  colors: [
+                    Color(0xFFF59E0B).withOpacity(0.1),
+                    Color(0xFFEC4899).withOpacity(0.1),
+                  ],
+                  begin: Alignment.centerLeft,
+                  end: Alignment.centerRight,
+                ),
+                borderRadius: BorderRadius.circular(16),
+                border: Border.all(
+                  color: Color(0xFFF59E0B).withOpacity(0.3),
+                  width: 1,
+                ),
+              ),
+              child: Column(
+                children: [
+                  // Coin header and value
+                  Row(
+                    mainAxisAlignment: MainAxisAlignment.spaceBetween,
+                    children: [
+                      Text(
+                        'Task Difficulty',
+                        style: TextStyle(
+                          color: Colors.white,
+                          fontSize: 16,
+                          fontWeight: FontWeight.w600,
+                        ),
+                      ),
+                      Container(
+                        padding: EdgeInsets.symmetric(horizontal: 12, vertical: 6),
+                        decoration: BoxDecoration(
+                          color: Color(0xFFF59E0B),
+                          borderRadius: BorderRadius.circular(12),
+                          boxShadow: [
+                            BoxShadow(
+                              color: Color(0xFFF59E0B).withOpacity(0.3),
+                              blurRadius: 8,
+                              offset: Offset(0, 2),
+                            ),
+                          ],
+                        ),
+                        child: Row(
+                          mainAxisSize: MainAxisSize.min,
+                          children: [
+                            Text(
+                              '${_coinReward.round()}',
+                              style: TextStyle(
+                                fontSize: 16,
+                                fontWeight: FontWeight.bold,
+                                color: Colors.white,
+                              ),
+                            ),
+                            SizedBox(width: 4),
+                            Text('🪙', style: TextStyle(fontSize: 14)),
+                          ],
+                        ),
+                      ),
+                    ],
+                  ),
+                  
+                  SizedBox(height: 16),
+                  
+                  // 🎯 Slider - Aesthetic design
+                  SliderTheme(
+                    data: SliderTheme.of(context).copyWith(
+                      trackHeight: 6,
+                      thumbShape: RoundSliderThumbShape(
+                        enabledThumbRadius: 12,
+                        elevation: 4,
+                      ),
+                      overlayShape: RoundSliderOverlayShape(overlayRadius: 20),
+                      activeTrackColor: Color(0xFFF59E0B),
+                      inactiveTrackColor: Color(0xFF404040),
+                      thumbColor: Colors.white,
+                      overlayColor: Color(0xFFF59E0B).withOpacity(0.2),
+                      valueIndicatorColor: Color(0xFFF59E0B),
+                      valueIndicatorTextStyle: TextStyle(
+                        color: Colors.white,
+                        fontWeight: FontWeight.bold,
+                      ),
                     ),
-                    child: Icon(
-                      Icons.close,
+                    child: Slider(
+                      value: _coinReward,
+                      min: 1,
+                      max: 5,
+                      divisions: 4,
+                      onChanged: (value) {
+                        setState(() {
+                          _coinReward = value;
+                        });
+                      },
+                    ),
+                  ),
+                  
+                  // Difficulty level descriptions
+                  Row(
+                    mainAxisAlignment: MainAxisAlignment.spaceBetween,
+                    children: [
+                      Text(
+                        'Easy',
+                        style: TextStyle(
+                          color: Color(0xFF10B981),
+                          fontSize: 12,
+                          fontWeight: FontWeight.w500,
+                        ),
+                      ),
+                      Text(
+                        'Medium',
+                        style: TextStyle(
+                          color: Color(0xFFF59E0B),
+                          fontSize: 12,
+                          fontWeight: FontWeight.w500,
+                        ),
+                      ),
+                      Text(
+                        'Hard',
+                        style: TextStyle(
+                          color: Color(0xFFEF4444),
+                          fontSize: 12,
+                          fontWeight: FontWeight.w500,
+                        ),
+                      ),
+                    ],
+                  ),
+                ],
+              ),
+            ),
+            
+            SizedBox(height: 28),
+            
+            // 🎯 Add Task Button - Ortalanmış ve tema uyumlu
+            GestureDetector(
+              onTap: _addTask,
+              child: Container(
+                width: double.infinity, // 🔧 Tam genişlik
+                padding: EdgeInsets.symmetric(vertical: 16),
+                decoration: BoxDecoration(
+                  gradient: LinearGradient(
+                    colors: [Color(0xFF8B5CF6), Color(0xFFEC4899)],
+                    begin: Alignment.centerLeft,
+                    end: Alignment.centerRight,
+                  ),
+                  borderRadius: BorderRadius.circular(16),
+                  boxShadow: [
+                    BoxShadow(
+                      color: Color(0xFF8B5CF6).withOpacity(0.4),
+                      blurRadius: 15,
+                      offset: Offset(0, 6),
+                    ),
+                  ],
+                ),
+                child: Center(
+                  child: Text(
+                    'Add Task',
+                    style: TextStyle(
                       color: Colors.white,
-                      size: 24,
+                      fontSize: 16,
+                      fontWeight: FontWeight.bold,
+                      letterSpacing: 0.5,
                     ),
                   ),
                 ),
-                
-                GestureDetector(
-                  onTap: _addTask,
-                  child: Container(
-                    width: 50,
-                    height: 50,
-                    decoration: BoxDecoration(
-                      color: Color(0xFF4B5563),
-                      shape: BoxShape.circle,
-                    ),
-                    child: Icon(
-                      Icons.add,
-                      color: Colors.white,
-                      size: 24,
-                    ),
-                  ),
-                ),
-              ],
+              ),
             ),
           ],
         ),
@@ -651,21 +832,27 @@ class _AddTaskDialogState extends State<AddTaskDialog> {
     if (_titleController.text.trim().isEmpty) {
       ScaffoldMessenger.of(context).showSnackBar(
         SnackBar(
-          content: Text('Lütfen görev başlığı girin'),
+          content: Text('Please enter a task title'),
           backgroundColor: Colors.red,
+          behavior: SnackBarBehavior.floating,
+          shape: RoundedRectangleBorder(
+            borderRadius: BorderRadius.circular(12),
+          ),
         ),
       );
       return;
     }
 
     final db = await DatabaseHelper.instance.database;
+    
+    // 🆕 Get coin reward value from slider
     await db.insert('tasks', {
       'user_id': widget.userId,
       'title': _titleController.text.trim(),
       'description': _descriptionController.text.trim(),
       'is_active': '1',
       'type': 'one_time',
-      'coin_reward': 5,
+      'coin_reward': _coinReward.round(), // 🎯 Slider value
     });
 
     widget.onTaskAdded();
@@ -673,8 +860,12 @@ class _AddTaskDialogState extends State<AddTaskDialog> {
     
     ScaffoldMessenger.of(context).showSnackBar(
       SnackBar(
-        content: Text('Görev başarıyla eklendi!'),
+        content: Text('Task added successfully! (+${_coinReward.round()} 🪙)'),
         backgroundColor: Color(0xFF8B5CF6),
+        behavior: SnackBarBehavior.floating,
+        shape: RoundedRectangleBorder(
+          borderRadius: BorderRadius.circular(12),
+        ),
       ),
     );
   }

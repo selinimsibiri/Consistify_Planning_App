@@ -1,7 +1,8 @@
 import 'package:flutter/material.dart';
-import 'package:flutter/services.dart'; // 🎯 Eklendi
+import 'package:flutter/services.dart';
 import 'package:sayfa_yonlendirme/db/database_helper.dart';
 import 'package:sayfa_yonlendirme/screens/todo_screen.dart';
+import 'package:sayfa_yonlendirme/screens/profile_screen.dart';
 
 class DailyScreen extends StatefulWidget {
   final int userId;
@@ -42,13 +43,11 @@ class _DailyScreenState extends State<DailyScreen> {
   void _showAddDailyDialog() {
     showDialog(
       context: context,
-      barrierDismissible: false,
+      barrierDismissible: true, // 🔧 Dışarıya tıklayınca kapanır
       builder: (BuildContext context) {
         return AddDailyDialog(
           userId: widget.userId,
-          onDailyAdded: () {
-            _loadDailyTasks();
-          },
+          onDailyAdded: _loadDailyTasks,
         );
       },
     );
@@ -57,14 +56,12 @@ class _DailyScreenState extends State<DailyScreen> {
   void _showEditDailyDialog(Map<String, dynamic> daily) {
     showDialog(
       context: context,
-      barrierDismissible: false,
+      barrierDismissible: true, // 🔧 Dışarıya tıklayınca kapanır
       builder: (BuildContext context) {
         return EditDailyDialog(
           userId: widget.userId,
           daily: daily,
-          onDailyUpdated: () {
-            _loadDailyTasks();
-          },
+          onDailyUpdated: _loadDailyTasks,
         );
       },
     );
@@ -126,7 +123,7 @@ class _DailyScreenState extends State<DailyScreen> {
   @override
   Widget build(BuildContext context) {
     return Scaffold(
-      // 🎯 Status bar'ı koyu yap - TODO ile aynı
+      // Status bar'ı koyu yap
       appBar: PreferredSize(
         preferredSize: Size.zero,
         child: AppBar(
@@ -139,167 +136,181 @@ class _DailyScreenState extends State<DailyScreen> {
           ),
         ),
       ),
-      // Daily Screen'de bu kısmı değiştir:
-      body: Container(
-        decoration: BoxDecoration(
-          gradient: LinearGradient(
-            begin: Alignment.topCenter,
-            end: Alignment.bottomCenter,
-            colors: [
-              Color.fromARGB(255, 46, 46, 46),
-            ],
-            stops: [1.0],
-          ),
-        ),
-        child: SafeArea( // 🎯 SafeArea'yı geri ekle
-          child: Column(
-            children: [
-              // Üst Bar
-              Container(
-                decoration: BoxDecoration(
-                  color: Color(0xFF1A1A1A),
-                  boxShadow: [
-                    BoxShadow(
-                      color: Colors.black.withOpacity(0.3),
-                      blurRadius: 10,
-                      offset: Offset(0, 2),
-                    ),
-                  ],
-                ),
-                padding: EdgeInsets.symmetric(horizontal: 20, vertical: 16), // 🎯 Basit padding
-                child: Row(
-                  children: [
-                    // ⚙️ Settings icon
-                    Container(
-                      width: 40,
-                      height: 40,
-                      decoration: BoxDecoration(
-                        color: Color(0xFF404040),
-                        borderRadius: BorderRadius.circular(12),
-                      ),
-                      child: Icon(
-                        Icons.settings,
-                        color: Colors.white,
-                        size: 20,
-                      ),
-                    ),
-                    
-                    // 📝 DAILIES başlığı - Dinamik genişlik
-                    Expanded(
-                      child: Container(
-                        margin: EdgeInsets.symmetric(horizontal: 16),
-                        padding: EdgeInsets.symmetric(horizontal: 20, vertical: 8),
-                        decoration: BoxDecoration(
-                          gradient: LinearGradient(
-                            colors: [Color(0xFF8B5CF6), Color(0xFFEC4899)],
-                            begin: Alignment.centerLeft,
-                            end: Alignment.centerRight,
-                          ),
-                          borderRadius: BorderRadius.circular(12),
-                          boxShadow: [
-                            BoxShadow(
-                              color: Color(0xFF8B5CF6).withOpacity(0.3),
-                              blurRadius: 12,
-                              offset: Offset(0, 4),
-                            ),
-                          ],
+      body: Stack( // 🆕 Stack eklendi
+        children: [
+          Container(
+            decoration: BoxDecoration(
+              gradient: LinearGradient(
+                begin: Alignment.topCenter,
+                end: Alignment.bottomCenter,
+                colors: [
+                  Color.fromARGB(255, 46, 46, 46),
+                ],
+                stops: [1.0],
+              ),
+            ),
+            child: SafeArea(
+              child: Column(
+                children: [
+                  // 🎯 Üst Bar
+                  Container(
+                    decoration: BoxDecoration(
+                      color: Color(0xFF1A1A1A),
+                      boxShadow: [
+                        BoxShadow(
+                          color: Colors.black.withOpacity(0.3),
+                          blurRadius: 10,
+                          offset: Offset(0, 2),
                         ),
-                        child: Center(
-                          child: Text(
-                            'DAILIES',
-                            style: TextStyle(
-                              fontSize: 16,
-                              fontWeight: FontWeight.bold,
+                      ],
+                    ),
+                    padding: EdgeInsets.symmetric(horizontal: 20, vertical: 16),
+                    child: Row(
+                      children: [
+                        // 🚪 Logout icon
+                        Container(
+                          width: 40,
+                          height: 40,
+                          decoration: BoxDecoration(
+                            color: Color(0xFF404040),
+                            borderRadius: BorderRadius.circular(12),
+                          ),
+                          child: Center(
+                            child: Icon(
+                              Icons.logout,
                               color: Colors.white,
-                              letterSpacing: 1,
+                              size: 20,
                             ),
                           ),
                         ),
-                      ),
-                    ),
-                    
-                    // 🔥 Streak counter
-                    Container(
-                      padding: EdgeInsets.symmetric(horizontal: 12, vertical: 8),
-                      decoration: BoxDecoration(
-                        color: Color(0xFFF59E0B),
-                        borderRadius: BorderRadius.circular(12),
-                        boxShadow: [
-                          BoxShadow(
-                            color: Color(0xFFF59E0B).withOpacity(0.3),
-                            blurRadius: 8,
-                            offset: Offset(0, 2),
-                          ),
-                        ],
-                      ),
-                      child: Center(
-                        child: Row(
-                          mainAxisSize: MainAxisSize.min,
-                          children: [
-                            Text(
-                              '$streakCount',
-                              style: TextStyle(
-                                fontSize: 16,
-                                fontWeight: FontWeight.bold,
-                                color: Colors.white,
+
+                        // 📝 DAILIES başlığı - Dinamik genişlik
+                        Expanded(
+                          child: Container(
+                            margin: EdgeInsets.symmetric(horizontal: 16),
+                            padding: EdgeInsets.symmetric(horizontal: 20, vertical: 8),
+                            decoration: BoxDecoration(
+                              gradient: LinearGradient(
+                                colors: [Color(0xFF8B5CF6), Color(0xFFEC4899)],
+                                begin: Alignment.centerLeft,
+                                end: Alignment.centerRight,
+                              ),
+                              borderRadius: BorderRadius.circular(12),
+                              boxShadow: [
+                                BoxShadow(
+                                  color: Color(0xFF8B5CF6).withOpacity(0.3),
+                                  blurRadius: 12,
+                                  offset: Offset(0, 4),
+                                ),
+                              ],
+                            ),
+                            child: Center(
+                              child: Text(
+                                'DAILIES',
+                                style: TextStyle(
+                                  fontSize: 16,
+                                  fontWeight: FontWeight.bold,
+                                  color: Colors.white,
+                                  letterSpacing: 1,
+                                ),
                               ),
                             ),
-                            SizedBox(width: 4),
-                            Text('🔥', style: TextStyle(fontSize: 14)),
-                          ],
+                          ),
                         ),
+                        
+                        // 🔥 Streak counter
+                        Container(
+                          padding: EdgeInsets.symmetric(horizontal: 12, vertical: 8),
+                          decoration: BoxDecoration(
+                            color: Color(0xFFF59E0B),
+                            borderRadius: BorderRadius.circular(12),
+                            boxShadow: [
+                              BoxShadow(
+                                color: Color(0xFFF59E0B).withOpacity(0.3),
+                                blurRadius: 8,
+                                offset: Offset(0, 2),
+                              ),
+                            ],
+                          ),
+                          child: Center(
+                            child: Row(
+                              mainAxisSize: MainAxisSize.min,
+                              children: [
+                                Text(
+                                  '$streakCount',
+                                  style: TextStyle(
+                                    fontSize: 16,
+                                    fontWeight: FontWeight.bold,
+                                    color: Colors.white,
+                                  ),
+                                ),
+                                SizedBox(width: 4),
+                                Text('🔥', style: TextStyle(fontSize: 14)),
+                              ],
+                            ),
+                          ),
+                        ),
+                      ],
+                    ),
+                  ),
+
+                  // 🎯 Daily Task Listesi
+                  Expanded(
+                    child: SingleChildScrollView(
+                      padding: EdgeInsets.symmetric(horizontal: 20),
+                      child: Column(
+                        children: [
+                          SizedBox(height: 8),
+                          ...dailyTasks.map((daily) => _buildDailyItem(daily)),
+                          SizedBox(height: 100), // Alt navigation için boşluk
+                        ],
                       ),
+                    ),
+                  ),
+                ],
+              ),
+            ),
+          ),
+          
+          // 🆕 Sağ alt köşede + butonu - Alt bara bitişik
+          Positioned(
+            right: 0, // Sağa tam bitişik
+            bottom: 90, // Alt barın hemen üstü
+            child: GestureDetector(
+              onTap: _showAddDailyDialog,
+              child: Container(
+                width: 70,
+                height: 65,
+                decoration: BoxDecoration(
+                  gradient: LinearGradient(
+                    colors: [Color(0xFF06B6D4), Color(0xFF8B5CF6)], // Daily renkleri
+                    begin: Alignment.topLeft,
+                    end: Alignment.bottomRight,
+                  ),
+                  borderRadius: BorderRadius.only(
+                    topLeft: Radius.circular(40),
+                    bottomLeft: Radius.circular(40),
+                  ),
+                  boxShadow: [
+                    BoxShadow(
+                      color: Color(0xFF06B6D4).withOpacity(0.4),
+                      blurRadius: 15,
+                      offset: Offset(-3, 0), // Sola doğru gölge
                     ),
                   ],
                 ),
-              ),
-              // 🎯 Daily Task Listesi
-              Expanded(
-                child: SingleChildScrollView(
-                  padding: EdgeInsets.symmetric(horizontal: 20),
-                  child: Column(
-                    children: [
-                      SizedBox(height: 8),
-                      ...dailyTasks.map((daily) => _buildDailyItem(daily)),
-                      SizedBox(height: 100), // Alt navigation için boşluk
-                    ],
-                  ),
+                child: Icon(
+                  Icons.add,
+                  color: Colors.white,
+                  size: 36,
                 ),
               ),
-            ],
-          ),
-        ),
-      ),
-
-      // 🎯 Floating Action Button - Aynı gradient tema
-      floatingActionButton: Container(
-        width: 70,
-        height: 70,
-        decoration: BoxDecoration(
-          gradient: LinearGradient(
-            colors: [Color(0xFF06B6D4), Color(0xFF8B5CF6)],
-            begin: Alignment.topLeft,
-            end: Alignment.bottomRight,
-          ),
-          shape: BoxShape.circle,
-          boxShadow: [
-            BoxShadow(
-              color: Color(0xFF06B6D4).withOpacity(0.4),
-              blurRadius: 15,
-              offset: Offset(0, 6),
             ),
-          ],
-        ),
-        child: FloatingActionButton(
-          onPressed: _showAddDailyDialog,
-          backgroundColor: Colors.transparent,
-          elevation: 0,
-          child: Icon(Icons.add, color: Colors.white, size: 32),
-        ),
+          ),
+        ],
       ),
-      floatingActionButtonLocation: FloatingActionButtonLocation.centerDocked,
-
-      // 🎯 Alt Navigation Bar - Aynı tema
+      
+      // 🆕 Alt Navigation Bar - 5 buton
       bottomNavigationBar: Container(
         height: 90,
         decoration: BoxDecoration(
@@ -313,7 +324,7 @@ class _DailyScreenState extends State<DailyScreen> {
           ],
         ),
         child: Row(
-          mainAxisAlignment: MainAxisAlignment.spaceEvenly,
+          mainAxisAlignment: MainAxisAlignment.spaceEvenly, // 🔧 5 buton eşit dağılım
           children: [
             _buildNavButton(
               icon: Icons.check_circle_outline,
@@ -333,14 +344,35 @@ class _DailyScreenState extends State<DailyScreen> {
             _buildNavButton(
               icon: Icons.assignment_outlined,
               color: Color(0xFF06B6D4),
-              isActive: true,
+              isActive: true, // Daily aktif
               onTap: () {},
             ),
-            SizedBox(width: 70), // FAB için boşluk
+            // 🆕 Yeni Ajanda/Planlama butonu - Ortada
+            _buildNavButton(
+              icon: Icons.schedule,
+              color: Color(0xFF10B981), // 🟢 Yeşil renk
+              onTap: () {
+                // TODO: Ajanda/Planlama sayfasına git
+                print('📅 Ajanda sayfasına gidilecek');
+                ScaffoldMessenger.of(context).showSnackBar(
+                  SnackBar(
+                    content: Text('📅 Ajanda özelliği yakında gelecek!'),
+                    backgroundColor: Color(0xFF10B981),
+                  ),
+                );
+              },
+            ),
             _buildNavButton(
               icon: Icons.person_outline,
               color: Color(0xFFF59E0B),
-              onTap: () => Navigator.pop(context, 'refresh'),
+              onTap: () {
+                Navigator.push(
+                  context,
+                  MaterialPageRoute(
+                    builder: (context) => ProfileScreen(userId: widget.userId),
+                  ),
+                );
+              },
             ),
             _buildNavButton(
               icon: Icons.trending_up,
@@ -353,8 +385,7 @@ class _DailyScreenState extends State<DailyScreen> {
     );
   }
 
-
-  // 🎯 Daily Item - Gelişmiş tasarım
+  // Daily Item
   Widget _buildDailyItem(Map<String, dynamic> daily) {
     return Container(
       margin: EdgeInsets.only(bottom: 16),
@@ -412,7 +443,7 @@ class _DailyScreenState extends State<DailyScreen> {
         },
         child: Row(
           children: [
-            // Daily container - Gelişmiş tasarım
+            // Daily container
             Expanded(
               child: Container(
                 padding: EdgeInsets.symmetric(horizontal: 24, vertical: 18),
@@ -440,7 +471,7 @@ class _DailyScreenState extends State<DailyScreen> {
             
             SizedBox(width: 16),
             
-            // 🎯 Edit butonu - Gelişmiş tasarım
+            // Edit butonu
             GestureDetector(
               onTap: () => _showEditDailyDialog(daily),
               child: Container(
@@ -470,7 +501,7 @@ class _DailyScreenState extends State<DailyScreen> {
     );
   }
 
-  // 🎯 Navigation Button - Aynı tema
+  // Navigation Button  
   Widget _buildNavButton({
     required IconData icon,
     required Color color,
@@ -499,7 +530,7 @@ class _DailyScreenState extends State<DailyScreen> {
   }
 }
 
-// 🎯 Edit Daily Dialog - Gelişmiş tasarım
+// Dialog sınıfları aynı kalacak...
 class EditDailyDialog extends StatefulWidget {
   final int userId;
   final Map<String, dynamic> daily;
@@ -519,6 +550,7 @@ class EditDailyDialog extends StatefulWidget {
 class _EditDailyDialogState extends State<EditDailyDialog> {
   late TextEditingController _titleController;
   late TextEditingController _descriptionController;
+  late double _coinReward; // 🆕 Coin slider değeri
   
   List<bool> selectedDays = [false, false, false, false, false, false, false];
   List<String> dayNames = ['M', 'T', 'W', 'T', 'F', 'S', 'S'];
@@ -528,6 +560,7 @@ class _EditDailyDialogState extends State<EditDailyDialog> {
     super.initState();
     _titleController = TextEditingController(text: widget.daily['title'] ?? '');
     _descriptionController = TextEditingController(text: widget.daily['description'] ?? '');
+    _coinReward = (widget.daily['coin_reward'] ?? 3).toDouble(); // 🆕 Mevcut coin değeri
     
     String savedDays = widget.daily['selected_days'] ?? '0,0,0,0,0,0,0';
     List<String> days = savedDays.split(',');
@@ -541,91 +574,225 @@ class _EditDailyDialogState extends State<EditDailyDialog> {
     return Dialog(
       backgroundColor: Colors.transparent,
       child: Container(
-        width: MediaQuery.of(context).size.width * 0.9,
+        width: MediaQuery.of(context).size.width * 0.85,
         padding: EdgeInsets.all(24),
         decoration: BoxDecoration(
-          color: Color(0xFF333333),
+          color: Color(0xFF2D2D2D), // 🎨 Todo ile aynı renk
           borderRadius: BorderRadius.circular(24),
           boxShadow: [
             BoxShadow(
               color: Colors.black.withOpacity(0.3),
               blurRadius: 20,
-              offset: Offset(0, 10),
+              offset: Offset(0, 8),
             ),
           ],
         ),
         child: Column(
           mainAxisSize: MainAxisSize.min,
           children: [
-            // 🎯 Başlık
-            Text(
-              'Daily Düzenle',
-              style: TextStyle(
-                color: Colors.white,
-                fontSize: 20,
-                fontWeight: FontWeight.bold,
+            // 🎯 Title Input - Todo ile aynı tasarım
+            Container(
+              padding: EdgeInsets.symmetric(horizontal: 16, vertical: 12),
+              decoration: BoxDecoration(
+                color: Color(0xFFF8F9FA),
+                borderRadius: BorderRadius.circular(16),
+                border: Border.all(
+                  color: Color(0xFF06B6D4).withOpacity(0.2),
+                  width: 1,
+                ),
+              ),
+              child: TextField(
+                controller: _titleController,
+                style: TextStyle(
+                  color: Color(0xFF1A1A1A),
+                  fontSize: 16,
+                  fontWeight: FontWeight.w600,
+                ),
+                decoration: InputDecoration(
+                  hintText: 'Daily name...',
+                  hintStyle: TextStyle(
+                    color: Color(0xFF6B7280),
+                    fontSize: 16,
+                    fontWeight: FontWeight.w400,
+                  ),
+                  border: InputBorder.none,
+                  contentPadding: EdgeInsets.zero,
+                  isDense: true,
+                ),
               ),
             ),
             
             SizedBox(height: 20),
             
-            // 🎯 Başlık Input
-            Container(
-              padding: EdgeInsets.symmetric(horizontal: 20, vertical: 16),
-              decoration: BoxDecoration(
-                color: Colors.white,
-                borderRadius: BorderRadius.circular(16),
-              ),
-              child: TextField(
-                controller: _titleController,
-                style: TextStyle(
-                  color: Colors.black,
-                  fontSize: 16,
-                  fontWeight: FontWeight.w500,
-                ),
-                decoration: InputDecoration(
-                  hintText: 'daily name',
-                  hintStyle: TextStyle(
-                    color: Colors.black54,
-                    fontSize: 16,
-                  ),
-                  border: InputBorder.none,
-                ),
-              ),
-            ),
-            
-            SizedBox(height: 16),
-            
-            // 🎯 Açıklama Input
+            // 🎯 Description Input - Todo ile aynı tasarım
             Container(
               height: 120,
-              padding: EdgeInsets.all(20),
+              padding: EdgeInsets.all(16),
               decoration: BoxDecoration(
-                color: Colors.white,
+                color: Color(0xFFF8F9FA),
                 borderRadius: BorderRadius.circular(16),
+                border: Border.all(
+                  color: Color(0xFF06B6D4).withOpacity(0.2),
+                  width: 1,
+                ),
               ),
               child: TextField(
                 controller: _descriptionController,
                 maxLines: null,
                 expands: true,
                 style: TextStyle(
-                  color: Colors.black,
-                  fontSize: 16,
+                  color: Color(0xFF1A1A1A),
+                  fontSize: 15,
                 ),
                 decoration: InputDecoration(
-                  hintText: 'info',
+                  hintText: 'Daily description (optional)...',
                   hintStyle: TextStyle(
-                    color: Colors.black54,
-                    fontSize: 16,
+                    color: Color(0xFF6B7280),
+                    fontSize: 15,
                   ),
                   border: InputBorder.none,
+                  contentPadding: EdgeInsets.zero,
                 ),
               ),
             ),
             
             SizedBox(height: 20),
             
-            // 🎯 Gün Seçimi - Dinamik genişlik
+            // 🆕 COIN SELECTION SECTION - Todo ile aynı tasarım
+            Container(
+              padding: EdgeInsets.all(20),
+              decoration: BoxDecoration(
+                gradient: LinearGradient(
+                  colors: [
+                    Color(0xFF06B6D4).withOpacity(0.1),
+                    Color(0xFF8B5CF6).withOpacity(0.1),
+                  ],
+                  begin: Alignment.centerLeft,
+                  end: Alignment.centerRight,
+                ),
+                borderRadius: BorderRadius.circular(16),
+                border: Border.all(
+                  color: Color(0xFF06B6D4).withOpacity(0.3),
+                  width: 1,
+                ),
+              ),
+              child: Column(
+                children: [
+                  // Coin header and value
+                  Row(
+                    mainAxisAlignment: MainAxisAlignment.spaceBetween,
+                    children: [
+                      Text(
+                        'Daily Difficulty',
+                        style: TextStyle(
+                          color: Colors.white,
+                          fontSize: 16,
+                          fontWeight: FontWeight.w600,
+                        ),
+                      ),
+                      Container(
+                        padding: EdgeInsets.symmetric(horizontal: 12, vertical: 6),
+                        decoration: BoxDecoration(
+                          color: Color(0xFF06B6D4),
+                          borderRadius: BorderRadius.circular(12),
+                          boxShadow: [
+                            BoxShadow(
+                              color: Color(0xFF06B6D4).withOpacity(0.3),
+                              blurRadius: 8,
+                              offset: Offset(0, 2),
+                            ),
+                          ],
+                        ),
+                        child: Row(
+                          mainAxisSize: MainAxisSize.min,
+                          children: [
+                            Text(
+                              '${_coinReward.round()}',
+                              style: TextStyle(
+                                fontSize: 16,
+                                fontWeight: FontWeight.bold,
+                                color: Colors.white,
+                              ),
+                            ),
+                            SizedBox(width: 4),
+                            Text('🪙', style: TextStyle(fontSize: 14)),
+                          ],
+                        ),
+                      ),
+                    ],
+                  ),
+                  
+                  SizedBox(height: 16),
+                  
+                  // 🎯 Slider - Daily renkleri ile
+                  SliderTheme(
+                    data: SliderTheme.of(context).copyWith(
+                      trackHeight: 6,
+                      thumbShape: RoundSliderThumbShape(
+                        enabledThumbRadius: 12,
+                        elevation: 4,
+                      ),
+                      overlayShape: RoundSliderOverlayShape(overlayRadius: 20),
+                      activeTrackColor: Color(0xFF06B6D4),
+                      inactiveTrackColor: Color(0xFF404040),
+                      thumbColor: Colors.white,
+                      overlayColor: Color(0xFF06B6D4).withOpacity(0.2),
+                      valueIndicatorColor: Color(0xFF06B6D4),
+                      valueIndicatorTextStyle: TextStyle(
+                        color: Colors.white,
+                        fontWeight: FontWeight.bold,
+                      ),
+                    ),
+                    child: Slider(
+                      value: _coinReward,
+                      min: 1,
+                      max: 5,
+                      divisions: 4,
+                      onChanged: (value) {
+                        setState(() {
+                          _coinReward = value;
+                        });
+                      },
+                    ),
+                  ),
+                  
+                  // Difficulty level descriptions
+                  Row(
+                    mainAxisAlignment: MainAxisAlignment.spaceBetween,
+                    children: [
+                      Text(
+                        'Easy',
+                        style: TextStyle(
+                          color: Color(0xFF10B981),
+                          fontSize: 12,
+                          fontWeight: FontWeight.w500,
+                        ),
+                      ),
+                      Text(
+                        'Medium',
+                        style: TextStyle(
+                          color: Color(0xFF06B6D4),
+                          fontSize: 12,
+                          fontWeight: FontWeight.w500,
+                        ),
+                      ),
+                      Text(
+                        'Hard',
+                        style: TextStyle(
+                          color: Color(0xFFEF4444),
+                          fontSize: 12,
+                          fontWeight: FontWeight.w500,
+                        ),
+                      ),
+                    ],
+                  ),
+                ],
+              ),
+            ),
+            
+            SizedBox(height: 20),
+            
+            // 🎯 Days Selection - Mevcut tasarım korundu
             Container(
               padding: EdgeInsets.all(16),
               decoration: BoxDecoration(
@@ -635,7 +802,7 @@ class _EditDailyDialogState extends State<EditDailyDialog> {
               child: Column(
                 children: [
                   Text(
-                    'Günler',
+                    'Days',
                     style: TextStyle(
                       color: Colors.white,
                       fontSize: 16,
@@ -643,17 +810,15 @@ class _EditDailyDialogState extends State<EditDailyDialog> {
                     ),
                   ),
                   SizedBox(height: 12),
-                  // 🎯 Wrap ile sarmalayalım, taşarsa alt satıra geçsin
                   Wrap(
-                    spacing: 6, // Yatay boşluk
-                    runSpacing: 8, // Dikey boşluk (alt satır varsa)
+                    spacing: 6,
+                    runSpacing: 8,
                     alignment: WrapAlignment.center,
                     children: List.generate(7, (index) {
-                      // 🎯 Daha küçük boyut hesaplama
                       double screenWidth = MediaQuery.of(context).size.width;
-                      double availableWidth = screenWidth * 0.85 - 32; // Dialog padding'leri çıkar
-                      double dayButtonWidth = (availableWidth / 7) - 6; // 7 gün, spacing için -6
-                      dayButtonWidth = dayButtonWidth.clamp(28.0, 40.0); // Min 28, max 40
+                      double availableWidth = screenWidth * 0.85 - 32;
+                      double dayButtonWidth = (availableWidth / 7) - 6;
+                      dayButtonWidth = dayButtonWidth.clamp(28.0, 40.0);
                       
                       return GestureDetector(
                         onTap: () {
@@ -671,7 +836,7 @@ class _EditDailyDialogState extends State<EditDailyDialog> {
                                   )
                                 : null,
                             color: selectedDays[index] ? null : Color(0xFF6B7280),
-                            borderRadius: BorderRadius.circular(10), // Biraz daha küçük radius
+                            borderRadius: BorderRadius.circular(10),
                             boxShadow: selectedDays[index] ? [
                               BoxShadow(
                                 color: Color(0xFF06B6D4).withOpacity(0.3),
@@ -685,7 +850,7 @@ class _EditDailyDialogState extends State<EditDailyDialog> {
                               dayNames[index],
                               style: TextStyle(
                                 color: Colors.white,
-                                fontSize: dayButtonWidth > 35 ? 12 : 10, // Daha küçük font
+                                fontSize: dayButtonWidth > 35 ? 12 : 10,
                                 fontWeight: FontWeight.bold,
                               ),
                             ),
@@ -698,65 +863,41 @@ class _EditDailyDialogState extends State<EditDailyDialog> {
               ),
             ),
 
+            SizedBox(height: 28),
             
-            SizedBox(height: 24),
-            
-            // 🎯 Alt Butonlar - Gelişmiş tasarım
-            Row(
-              mainAxisAlignment: MainAxisAlignment.spaceEvenly,
-              children: [
-                // İptal Butonu
-                GestureDetector(
-                  onTap: () => Navigator.pop(context),
-                  child: Container(
-                    width: 60,
-                    height: 60,
-                    decoration: BoxDecoration(
-                      color: Color(0xFF6B7280),
-                      shape: BoxShape.circle,
-                      boxShadow: [
-                        BoxShadow(
-                          color: Color(0xFF6B7280).withOpacity(0.3),
-                          blurRadius: 8,
-                          offset: Offset(0, 4),
-                        ),
-                      ],
+            // 🎯 Update Daily Button - Todo ile aynı tasarım
+            GestureDetector(
+              onTap: _updateDaily,
+              child: Container(
+                width: double.infinity,
+                padding: EdgeInsets.symmetric(vertical: 16),
+                decoration: BoxDecoration(
+                  gradient: LinearGradient(
+                    colors: [Color(0xFF10B981), Color(0xFF059669)], // 🎨 Update için yeşil
+                    begin: Alignment.centerLeft,
+                    end: Alignment.centerRight,
+                  ),
+                  borderRadius: BorderRadius.circular(16),
+                  boxShadow: [
+                    BoxShadow(
+                      color: Color(0xFF10B981).withOpacity(0.4),
+                      blurRadius: 15,
+                      offset: Offset(0, 6),
                     ),
-                    child: Icon(
-                      Icons.close,
+                  ],
+                ),
+                child: Center(
+                  child: Text(
+                    'Update Daily',
+                    style: TextStyle(
                       color: Colors.white,
-                      size: 28,
+                      fontSize: 16,
+                      fontWeight: FontWeight.bold,
+                      letterSpacing: 0.5,
                     ),
                   ),
                 ),
-                
-                // Güncelle Butonu
-                GestureDetector(
-                  onTap: _updateDaily,
-                  child: Container(
-                    width: 60,
-                    height: 60,
-                    decoration: BoxDecoration(
-                      gradient: LinearGradient(
-                        colors: [Color(0xFF10B981), Color(0xFF059669)],
-                      ),
-                      shape: BoxShape.circle,
-                      boxShadow: [
-                        BoxShadow(
-                          color: Color(0xFF10B981).withOpacity(0.4),
-                          blurRadius: 12,
-                          offset: Offset(0, 4),
-                        ),
-                      ],
-                    ),
-                    child: Icon(
-                      Icons.check,
-                      color: Colors.white,
-                      size: 28,
-                    ),
-                  ),
-                ),
-              ],
+              ),
             ),
           ],
         ),
@@ -768,7 +909,7 @@ class _EditDailyDialogState extends State<EditDailyDialog> {
     if (_titleController.text.trim().isEmpty) {
       ScaffoldMessenger.of(context).showSnackBar(
         SnackBar(
-          content: Text('Lütfen daily adı girin'),
+          content: Text('Please enter a daily name'),
           backgroundColor: Colors.red,
           behavior: SnackBarBehavior.floating,
           shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(12)),
@@ -780,7 +921,7 @@ class _EditDailyDialogState extends State<EditDailyDialog> {
     if (!selectedDays.any((day) => day)) {
       ScaffoldMessenger.of(context).showSnackBar(
         SnackBar(
-          content: Text('Lütfen en az bir gün seçin'),
+          content: Text('Please select at least one day'),
           backgroundColor: Colors.red,
           behavior: SnackBarBehavior.floating,
           shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(12)),
@@ -799,6 +940,7 @@ class _EditDailyDialogState extends State<EditDailyDialog> {
         'title': _titleController.text.trim(),
         'description': _descriptionController.text.trim(),
         'selected_days': selectedDaysString,
+        'coin_reward': _coinReward.round(), // 🆕 Slider değeri
       },
       where: 'id = ?',
       whereArgs: [widget.daily['id']],
@@ -813,7 +955,7 @@ class _EditDailyDialogState extends State<EditDailyDialog> {
     
     ScaffoldMessenger.of(context).showSnackBar(
       SnackBar(
-        content: Text('Daily görev başarıyla güncellendi!'),
+        content: Text('Daily updated successfully! (${_coinReward.round()} 🪙)'),
         backgroundColor: Color(0xFF10B981),
         behavior: SnackBarBehavior.floating,
         shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(12)),
@@ -848,7 +990,6 @@ class _EditDailyDialogState extends State<EditDailyDialog> {
   }
 }
 
-// 🎯 Add Daily Dialog - Gelişmiş tasarım
 class AddDailyDialog extends StatefulWidget {
   final int userId;
   final VoidCallback onDailyAdded;
@@ -866,6 +1007,7 @@ class AddDailyDialog extends StatefulWidget {
 class _AddDailyDialogState extends State<AddDailyDialog> {
   final _titleController = TextEditingController();
   final _descriptionController = TextEditingController();
+  double _coinReward = 3.0; // 🆕 Default 3 coins
   
   List<bool> selectedDays = [false, false, false, false, false, false, false];
   List<String> dayNames = ['M', 'T', 'W', 'T', 'F', 'S', 'S'];
@@ -875,91 +1017,225 @@ class _AddDailyDialogState extends State<AddDailyDialog> {
     return Dialog(
       backgroundColor: Colors.transparent,
       child: Container(
-        width: MediaQuery.of(context).size.width * 0.9,
+        width: MediaQuery.of(context).size.width * 0.85,
         padding: EdgeInsets.all(24),
         decoration: BoxDecoration(
-          color: Color(0xFF333333),
+          color: Color(0xFF2D2D2D),
           borderRadius: BorderRadius.circular(24),
           boxShadow: [
             BoxShadow(
               color: Colors.black.withOpacity(0.3),
               blurRadius: 20,
-              offset: Offset(0, 10),
+              offset: Offset(0, 8),
             ),
           ],
         ),
         child: Column(
           mainAxisSize: MainAxisSize.min,
           children: [
-            // 🎯 Başlık
-            Text(
-              'Yeni Daily Ekle',
-              style: TextStyle(
-                color: Colors.white,
-                fontSize: 20,
-                fontWeight: FontWeight.bold,
+            // 🎯 Title Input
+            Container(
+              padding: EdgeInsets.symmetric(horizontal: 16, vertical: 12),
+              decoration: BoxDecoration(
+                color: Color(0xFFF8F9FA),
+                borderRadius: BorderRadius.circular(16),
+                border: Border.all(
+                  color: Color(0xFF06B6D4).withOpacity(0.2),
+                  width: 1,
+                ),
+              ),
+              child: TextField(
+                controller: _titleController,
+                style: TextStyle(
+                  color: Color(0xFF1A1A1A),
+                  fontSize: 16,
+                  fontWeight: FontWeight.w600,
+                ),
+                decoration: InputDecoration(
+                  hintText: 'Daily name...',
+                  hintStyle: TextStyle(
+                    color: Color(0xFF6B7280),
+                    fontSize: 16,
+                    fontWeight: FontWeight.w400,
+                  ),
+                  border: InputBorder.none,
+                  contentPadding: EdgeInsets.zero,
+                  isDense: true,
+                ),
               ),
             ),
             
             SizedBox(height: 20),
             
-            // 🎯 Başlık Input
-            Container(
-              padding: EdgeInsets.symmetric(horizontal: 20, vertical: 16),
-              decoration: BoxDecoration(
-                color: Colors.white,
-                borderRadius: BorderRadius.circular(16),
-              ),
-              child: TextField(
-                controller: _titleController,
-                style: TextStyle(
-                  color: Colors.black,
-                  fontSize: 16,
-                  fontWeight: FontWeight.w500,
-                ),
-                decoration: InputDecoration(
-                  hintText: 'daily name',
-                  hintStyle: TextStyle(
-                    color: Colors.black54,
-                    fontSize: 16,
-                  ),
-                  border: InputBorder.none,
-                ),
-              ),
-            ),
-            
-            SizedBox(height: 16),
-            
-            // 🎯 Açıklama Input
+            // 🎯 Description Input
             Container(
               height: 120,
-              padding: EdgeInsets.all(20),
+              padding: EdgeInsets.all(16),
               decoration: BoxDecoration(
-                color: Colors.white,
+                color: Color(0xFFF8F9FA),
                 borderRadius: BorderRadius.circular(16),
+                border: Border.all(
+                  color: Color(0xFF06B6D4).withOpacity(0.2),
+                  width: 1,
+                ),
               ),
               child: TextField(
                 controller: _descriptionController,
                 maxLines: null,
                 expands: true,
                 style: TextStyle(
-                  color: Colors.black,
-                  fontSize: 16,
+                  color: Color(0xFF1A1A1A),
+                  fontSize: 15,
                 ),
                 decoration: InputDecoration(
-                  hintText: 'info',
+                  hintText: 'Daily description (optional)...',
                   hintStyle: TextStyle(
-                    color: Colors.black54,
-                    fontSize: 16,
+                    color: Color(0xFF6B7280),
+                    fontSize: 15,
                   ),
                   border: InputBorder.none,
+                  contentPadding: EdgeInsets.zero,
                 ),
+              ),
+            ),
+            
+            SizedBox(height: 24),
+            
+            // 🆕 COIN SELECTION SECTION
+            Container(
+              padding: EdgeInsets.all(20),
+              decoration: BoxDecoration(
+                gradient: LinearGradient(
+                  colors: [
+                    Color(0xFF06B6D4).withOpacity(0.1),
+                    Color(0xFF8B5CF6).withOpacity(0.1),
+                  ],
+                  begin: Alignment.centerLeft,
+                  end: Alignment.centerRight,
+                ),
+                borderRadius: BorderRadius.circular(16),
+                border: Border.all(
+                  color: Color(0xFF06B6D4).withOpacity(0.3),
+                  width: 1,
+                ),
+              ),
+              child: Column(
+                children: [
+                  // Coin header and value
+                  Row(
+                    mainAxisAlignment: MainAxisAlignment.spaceBetween,
+                    children: [
+                      Text(
+                        'Daily Difficulty',
+                        style: TextStyle(
+                          color: Colors.white,
+                          fontSize: 16,
+                          fontWeight: FontWeight.w600,
+                        ),
+                      ),
+                      Container(
+                        padding: EdgeInsets.symmetric(horizontal: 12, vertical: 6),
+                        decoration: BoxDecoration(
+                          color: Color(0xFF06B6D4),
+                          borderRadius: BorderRadius.circular(12),
+                          boxShadow: [
+                            BoxShadow(
+                              color: Color(0xFF06B6D4).withOpacity(0.3),
+                              blurRadius: 8,
+                              offset: Offset(0, 2),
+                            ),
+                          ],
+                        ),
+                        child: Row(
+                          mainAxisSize: MainAxisSize.min,
+                          children: [
+                            Text(
+                              '${_coinReward.round()}',
+                              style: TextStyle(
+                                fontSize: 16,
+                                fontWeight: FontWeight.bold,
+                                color: Colors.white,
+                              ),
+                            ),
+                            SizedBox(width: 4),
+                            Text('🪙', style: TextStyle(fontSize: 14)),
+                          ],
+                        ),
+                      ),
+                    ],
+                  ),
+                  
+                  SizedBox(height: 16),
+                  
+                  // 🎯 Slider
+                  SliderTheme(
+                    data: SliderTheme.of(context).copyWith(
+                      trackHeight: 6,
+                      thumbShape: RoundSliderThumbShape(
+                        enabledThumbRadius: 12,
+                        elevation: 4,
+                      ),
+                      overlayShape: RoundSliderOverlayShape(overlayRadius: 20),
+                      activeTrackColor: Color(0xFF06B6D4),
+                      inactiveTrackColor: Color(0xFF404040),
+                      thumbColor: Colors.white,
+                      overlayColor: Color(0xFF06B6D4).withOpacity(0.2),
+                      valueIndicatorColor: Color(0xFF06B6D4),
+                      valueIndicatorTextStyle: TextStyle(
+                        color: Colors.white,
+                        fontWeight: FontWeight.bold,
+                      ),
+                    ),
+                    child: Slider(
+                      value: _coinReward,
+                      min: 1,
+                      max: 5,
+                      divisions: 4,
+                      onChanged: (value) {
+                        setState(() {
+                          _coinReward = value;
+                        });
+                      },
+                    ),
+                  ),
+                  
+                  // Difficulty level descriptions
+                  Row(
+                    mainAxisAlignment: MainAxisAlignment.spaceBetween,
+                    children: [
+                      Text(
+                        'Easy',
+                        style: TextStyle(
+                          color: Color(0xFF10B981),
+                          fontSize: 12,
+                          fontWeight: FontWeight.w500,
+                        ),
+                      ),
+                      Text(
+                        'Medium',
+                        style: TextStyle(
+                          color: Color(0xFF06B6D4),
+                          fontSize: 12,
+                          fontWeight: FontWeight.w500,
+                        ),
+                      ),
+                      Text(
+                        'Hard',
+                        style: TextStyle(
+                          color: Color(0xFFEF4444),
+                          fontSize: 12,
+                          fontWeight: FontWeight.w500,
+                        ),
+                      ),
+                    ],
+                  ),
+                ],
               ),
             ),
             
             SizedBox(height: 20),
             
-            // yeni oluşturulan dailyler için gün seçimi
+            // 🎯 Days Selection
             Container(
               padding: EdgeInsets.all(16),
               decoration: BoxDecoration(
@@ -969,7 +1245,7 @@ class _AddDailyDialogState extends State<AddDailyDialog> {
               child: Column(
                 children: [
                   Text(
-                    'Günler',
+                    'Days',
                     style: TextStyle(
                       color: Colors.white,
                       fontSize: 16,
@@ -977,17 +1253,15 @@ class _AddDailyDialogState extends State<AddDailyDialog> {
                     ),
                   ),
                   SizedBox(height: 12),
-                  // 🎯 Wrap ile sarmalayalım, taşarsa alt satıra geçsin
                   Wrap(
-                    spacing: 6, // Yatay boşluk
-                    runSpacing: 8, // Dikey boşluk (alt satır varsa)
+                    spacing: 6,
+                    runSpacing: 8,
                     alignment: WrapAlignment.center,
                     children: List.generate(7, (index) {
-                      // 🎯 Daha küçük boyut hesaplama
                       double screenWidth = MediaQuery.of(context).size.width;
-                      double availableWidth = screenWidth * 0.85 - 32; // Dialog padding'leri çıkar
-                      double dayButtonWidth = (availableWidth / 7) - 6; // 7 gün, spacing için -6
-                      dayButtonWidth = dayButtonWidth.clamp(28.0, 40.0); // Min 28, max 40
+                      double availableWidth = screenWidth * 0.85 - 32;
+                      double dayButtonWidth = (availableWidth / 7) - 6;
+                      dayButtonWidth = dayButtonWidth.clamp(28.0, 40.0);
                       
                       return GestureDetector(
                         onTap: () {
@@ -1005,7 +1279,7 @@ class _AddDailyDialogState extends State<AddDailyDialog> {
                                   )
                                 : null,
                             color: selectedDays[index] ? null : Color(0xFF6B7280),
-                            borderRadius: BorderRadius.circular(10), // Biraz daha küçük radius
+                            borderRadius: BorderRadius.circular(10),
                             boxShadow: selectedDays[index] ? [
                               BoxShadow(
                                 color: Color(0xFF06B6D4).withOpacity(0.3),
@@ -1019,7 +1293,7 @@ class _AddDailyDialogState extends State<AddDailyDialog> {
                               dayNames[index],
                               style: TextStyle(
                                 color: Colors.white,
-                                fontSize: dayButtonWidth > 35 ? 12 : 10, // Daha küçük font
+                                fontSize: dayButtonWidth > 35 ? 12 : 10,
                                 fontWeight: FontWeight.bold,
                               ),
                             ),
@@ -1032,64 +1306,41 @@ class _AddDailyDialogState extends State<AddDailyDialog> {
               ),
             ),
             
-            SizedBox(height: 24),
+            SizedBox(height: 28),
             
-            // 🎯 Alt Butonlar - Gelişmiş tasarım
-            Row(
-              mainAxisAlignment: MainAxisAlignment.spaceEvenly,
-              children: [
-                // İptal Butonu
-                GestureDetector(
-                  onTap: () => Navigator.pop(context),
-                  child: Container(
-                    width: 60,
-                    height: 60,
-                    decoration: BoxDecoration(
-                      color: Color(0xFF6B7280),
-                      shape: BoxShape.circle,
-                      boxShadow: [
-                        BoxShadow(
-                          color: Color(0xFF6B7280).withOpacity(0.3),
-                          blurRadius: 8,
-                          offset: Offset(0, 4),
-                        ),
-                      ],
+            // 🎯 Add Daily Button
+            GestureDetector(
+              onTap: _addDaily,
+              child: Container(
+                width: double.infinity,
+                padding: EdgeInsets.symmetric(vertical: 16),
+                decoration: BoxDecoration(
+                  gradient: LinearGradient(
+                    colors: [Color(0xFF06B6D4), Color(0xFF8B5CF6)],
+                    begin: Alignment.centerLeft,
+                    end: Alignment.centerRight,
+                  ),
+                  borderRadius: BorderRadius.circular(16),
+                  boxShadow: [
+                    BoxShadow(
+                      color: Color(0xFF06B6D4).withOpacity(0.4),
+                      blurRadius: 15,
+                      offset: Offset(0, 6),
                     ),
-                    child: Icon(
-                      Icons.close,
+                  ],
+                ),
+                child: Center(
+                  child: Text(
+                    'Add Daily',
+                    style: TextStyle(
                       color: Colors.white,
-                      size: 28,
+                      fontSize: 16,
+                      fontWeight: FontWeight.bold,
+                      letterSpacing: 0.5,
                     ),
                   ),
                 ),
-                
-                // Ekle Butonu
-                GestureDetector(
-                  onTap: _addDaily,
-                  child: Container(
-                    width: 60,
-                    height: 60,
-                    decoration: BoxDecoration(
-                      gradient: LinearGradient(
-                        colors: [Color(0xFF06B6D4), Color(0xFF8B5CF6)],
-                      ),
-                      shape: BoxShape.circle,
-                      boxShadow: [
-                        BoxShadow(
-                          color: Color(0xFF06B6D4).withOpacity(0.4),
-                          blurRadius: 12,
-                          offset: Offset(0, 4),
-                        ),
-                      ],
-                    ),
-                    child: Icon(
-                      Icons.add,
-                      color: Colors.white,
-                      size: 28,
-                    ),
-                  ),
-                ),
-              ],
+              ),
             ),
           ],
         ),
@@ -1101,7 +1352,7 @@ class _AddDailyDialogState extends State<AddDailyDialog> {
     if (_titleController.text.trim().isEmpty) {
       ScaffoldMessenger.of(context).showSnackBar(
         SnackBar(
-          content: Text('Lütfen daily adı girin'),
+          content: Text('Please enter a daily name'),
           backgroundColor: Colors.red,
           behavior: SnackBarBehavior.floating,
           shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(12)),
@@ -1113,7 +1364,7 @@ class _AddDailyDialogState extends State<AddDailyDialog> {
     if (!selectedDays.any((day) => day)) {
       ScaffoldMessenger.of(context).showSnackBar(
         SnackBar(
-          content: Text('Lütfen en az bir gün seçin'),
+          content: Text('Please select at least one day'),
           backgroundColor: Colors.red,
           behavior: SnackBarBehavior.floating,
           shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(12)),
@@ -1131,24 +1382,25 @@ class _AddDailyDialogState extends State<AddDailyDialog> {
       'title': _titleController.text.trim(),
       'description': _descriptionController.text.trim(),
       'selected_days': selectedDaysString,
-      'coin_reward': 5,
+      'coin_reward': _coinReward.round(),
       'is_active': 1,
     });
 
     await DatabaseHelper.instance.generateDailyTasksForUser(widget.userId);
 
-    widget.onDailyAdded();
     Navigator.pop(context);
+    widget.onDailyAdded(); // 🔧 Bu satırı popup kapandıktan sonra çağır
     
     ScaffoldMessenger.of(context).showSnackBar(
       SnackBar(
-        content: Text('Daily görev başarıyla eklendi!'),
+        content: Text('Daily added successfully! (+${_coinReward.round()} 🪙)'),
         backgroundColor: Color(0xFF06B6D4),
         behavior: SnackBarBehavior.floating,
         shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(12)),
       ),
     );
   }
+
 
   @override
   void dispose() {

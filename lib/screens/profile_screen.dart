@@ -1,4 +1,5 @@
 import 'package:flutter/material.dart';
+import 'package:flutter/services.dart'; // 🆕 Eklendi
 import 'package:sayfa_yonlendirme/screens/daily_screen.dart';
 import 'package:sayfa_yonlendirme/screens/login_page.dart';
 import 'package:sayfa_yonlendirme/screens/market_section.dart';
@@ -17,9 +18,8 @@ class ProfileScreen extends StatefulWidget {
 class _ProfileScreenState extends State<ProfileScreen> {
   late int userId;
   Map<String, String> selectedItems = {};
-  int userCoins = 0; // 🪙 Kullanıcı coin bilgisi
+  int userCoins = 0;
 
-  // Katman sıralaması
   final List<String> layerOrder = [
     'body', 'shoes', 'bottom', 'top', 'mouth', 'eyes', 'hair', 'accs', 'hat',
   ];
@@ -29,10 +29,9 @@ class _ProfileScreenState extends State<ProfileScreen> {
     super.initState();
     userId = widget.userId;
     _loadSelectedItems();
-    _loadUserCoins(); // 🪙 Coin bilgisini yükle
+    _loadUserCoins();
   }
 
-  // 🪙 Kullanıcının coin bilgisini yükle
   Future<void> _loadUserCoins() async {
     final db = await DatabaseHelper.instance.database;
     final result = await db.query(
@@ -75,221 +74,285 @@ class _ProfileScreenState extends State<ProfileScreen> {
     setState(() {
       selectedItems[category] = imagePath;
     });
-    // Market'ten item seçildiğinde coin bilgisini güncelle
-    _loadUserCoins(); // 🆕 Coin bilgisini yenile
+    _loadUserCoins();
   }
-
 
   @override
   Widget build(BuildContext context) {
     return Scaffold(
-      backgroundColor: Color(0xFF1A1A1A),
-      body: SafeArea(
-        child: Column(
-          children: [
-            // ÜST BAR
-            Padding(
-              padding: const EdgeInsets.all(16.0),
-              child: Row(
-                children: [
-                  // Sol - Settings butonu
-                  GestureDetector(
-                    onTap: _showLogoutDialog,
-                    child: Container(
-                      width: 40,
-                      height: 40,
-                      decoration: BoxDecoration(
-                        color: Color(0xFF404040),
-                        borderRadius: BorderRadius.circular(8),
-                      ),
-                      child: Icon(
-                        Icons.settings,
-                        color: Colors.white,
-                        size: 20,
-                      ),
-                    ),
-                  ),
-                  
-                  // 🎯 PROFILE başlığı - Dinamik genişlik
-                  Expanded(
-                    child: Container(
-                      margin: EdgeInsets.symmetric(horizontal: 16), // Sol-sağ boşluk
-                      padding: EdgeInsets.symmetric(horizontal: 20, vertical: 8),
-                      decoration: BoxDecoration(
-                        gradient: LinearGradient(
-                          colors: [Color(0xFF8B5CF6), Color(0xFF7C3AED)],
-                          begin: Alignment.centerLeft,
-                          end: Alignment.centerRight,
-                        ),
-                        borderRadius: BorderRadius.circular(8),
-                      ),
-                      child: Center(
-                        child: Text(
-                          'PROFILE',
-                          style: TextStyle(
-                            fontSize: 16,
-                            fontWeight: FontWeight.bold,
-                            color: Colors.white,
-                            letterSpacing: 1,
-                          ),
-                        ),
-                      ),
-                    ),
-                  ),
-                  
-                  // Sağ - Coin (kapsül şeklinde) 🪙
-                  Container(
-                    padding: EdgeInsets.symmetric(horizontal: 12, vertical: 8),
-                    decoration: BoxDecoration(
-                      gradient: LinearGradient(
-                        colors: [Color(0xFFF59E0B), Color(0xFFD97706)],
-                        begin: Alignment.centerLeft,
-                        end: Alignment.centerRight,
-                      ),
-                      borderRadius: BorderRadius.circular(8),
-                    ),
-                    child: Row(
-                      mainAxisSize: MainAxisSize.min,
-                      children: [
-                        Text(
-                          '$userCoins',
-                          style: TextStyle(
-                            fontSize: 16,
-                            fontWeight: FontWeight.bold,
-                            color: Colors.white,
-                          ),
-                        ),
-                        SizedBox(width: 4),
-                        Text('🪙', style: TextStyle(fontSize: 14)),
-                      ],
-                    ),
-                  ),
-                ],
-              ),
-            ),
-
-            // 🎯 Karakter Görseli
-            Padding(
-              padding: const EdgeInsets.all(20.0),
-              child: Container(
-                width: double.infinity,
-                height: 220,
+      // 🆕 Status bar ayarları - TodoScreen ile aynı
+      appBar: PreferredSize(
+        preferredSize: Size.zero,
+        child: AppBar(
+          backgroundColor: Color(0xFF1A1A1A),
+          elevation: 0,
+          systemOverlayStyle: SystemUiOverlayStyle(
+            statusBarColor: Color(0xFF1A1A1A),
+            statusBarIconBrightness: Brightness.light,
+            statusBarBrightness: Brightness.dark,
+          ),
+        ),
+      ),
+      body: Container(
+        // 🆕 Arka plan gradient - TodoScreen ile aynı
+        decoration: BoxDecoration(
+          gradient: LinearGradient(
+            begin: Alignment.topCenter,
+            end: Alignment.bottomCenter,
+            colors: [
+              Color.fromARGB(255, 46, 46, 46),
+            ],
+            stops: [1.0],
+          ),
+        ),
+        child: SafeArea(
+          child: Column(
+            children: [
+              // 🆕 ÜST BAR - TodoScreen ile aynı stil
+              Container(
                 decoration: BoxDecoration(
-                  gradient: LinearGradient(
-                    colors: [
-                      Color(0xFFF8F9FA),
-                      Color(0xFFE9ECEF),
-                    ],
-                    begin: Alignment.topLeft,
-                    end: Alignment.bottomRight,
-                  ),
-                  borderRadius: BorderRadius.circular(20),
-                  border: Border.all(
-                    color: Color(0xFF8B5CF6).withOpacity(0.3),
-                    width: 2,
-                  ),
+                  color: Color(0xFF1A1A1A),
                   boxShadow: [
                     BoxShadow(
-                      color: Color(0xFF8B5CF6).withOpacity(0.1),
-                      blurRadius: 20,
-                      offset: Offset(0, 8),
+                      color: Colors.black.withOpacity(0.3),
+                      blurRadius: 10,
+                      offset: Offset(0, 2),
                     ),
                   ],
                 ),
-                child: Stack(
-                  alignment: Alignment.center,
+                padding: EdgeInsets.symmetric(horizontal: 20, vertical: 16),
+                child: Row(
                   children: [
-                    // Karakter katmanları
-                    ...layerOrder.map((category) {
-                      if (selectedItems.containsKey(category)) {
-                        return Image.asset(
-                          selectedItems[category]!,
-                          fit: BoxFit.contain,
-                          height: 200,
-                        );
-                      }
-                      return SizedBox.shrink();
-                    }).toList(),
+                    // Sol -🚪 Logout icon
+                    GestureDetector(
+                      onTap: _showLogoutDialog,
+                      child: Container(
+                        width: 40,
+                        height: 40,
+                        decoration: BoxDecoration(
+                          color: Color(0xFF404040),
+                          borderRadius: BorderRadius.circular(12),
+                        ),
+                        child: Icon(
+                          Icons.logout,
+                          color: Colors.white,
+                          size: 20,
+                        ),
+                      ),
+                    ),
+                    
+                    // 🆕 PROFILE başlığı - TodoScreen ile aynı stil
+                    Expanded(
+                      child: Container(
+                        margin: EdgeInsets.symmetric(horizontal: 16),
+                        padding: EdgeInsets.symmetric(horizontal: 20, vertical: 8),
+                        decoration: BoxDecoration(
+                          gradient: LinearGradient(
+                            colors: [Color(0xFF8B5CF6), Color(0xFFEC4899)],
+                            begin: Alignment.centerLeft,
+                            end: Alignment.centerRight,
+                          ),
+                          borderRadius: BorderRadius.circular(12),
+                          boxShadow: [
+                            BoxShadow(
+                              color: Color(0xFF8B5CF6).withOpacity(0.3),
+                              blurRadius: 12,
+                              offset: Offset(0, 4),
+                            ),
+                          ],
+                        ),
+                        child: Center(
+                          child: Text(
+                            'PROFILE',
+                            style: TextStyle(
+                              fontSize: 16,
+                              fontWeight: FontWeight.bold,
+                              color: Colors.white,
+                              letterSpacing: 1,
+                            ),
+                          ),
+                        ),
+                      ),
+                    ),
+                    
+                    // 🆕 Coin - TodoScreen streak ile aynı stil
+                    Container(
+                      padding: EdgeInsets.symmetric(horizontal: 12, vertical: 8),
+                      decoration: BoxDecoration(
+                        color: Color(0xFFF59E0B),
+                        borderRadius: BorderRadius.circular(12),
+                        boxShadow: [
+                          BoxShadow(
+                            color: Color(0xFFF59E0B).withOpacity(0.3),
+                            blurRadius: 8,
+                            offset: Offset(0, 2),
+                          ),
+                        ],
+                      ),
+                      child: Center(
+                        child: Row(
+                          mainAxisSize: MainAxisSize.min,
+                          children: [
+                            Text(
+                              '$userCoins',
+                              style: TextStyle(
+                                fontSize: 16,
+                                fontWeight: FontWeight.bold,
+                                color: Colors.white,
+                              ),
+                            ),
+                            SizedBox(width: 4),
+                            Text('🪙', style: TextStyle(fontSize: 14)),
+                          ],
+                        ),
+                      ),
+                    ),
                   ],
                 ),
               ),
-            ),
 
-            // 🎯 Market Alanı
-            Expanded(
-              child: MarketSection(
-                onItemSelected: updateSelectedItem, 
-                userId: userId,
-              ),
-            ),
+              // 🆕 İçerik alanı - Market alt bara bitişik olacak
+              Expanded(
+                child: Column(
+                  children: [
+                    // 🎯 Karakter Görseli - Padding ile
+                    Padding(
+                      padding: EdgeInsets.symmetric(horizontal: 20),
+                      child: Column(
+                        children: [
+                          SizedBox(height: 8),
+                          Container(
+                            width: double.infinity,
+                            height: 220,
+                            decoration: BoxDecoration(
+                              gradient: LinearGradient(
+                                colors: [
+                                  Color(0xFFF8F9FA),
+                                  Color(0xFFE9ECEF),
+                                ],
+                                begin: Alignment.topLeft,
+                                end: Alignment.bottomRight,
+                              ),
+                              borderRadius: BorderRadius.circular(20),
+                              border: Border.all(
+                                color: Color(0xFF8B5CF6).withOpacity(0.3),
+                                width: 2,
+                              ),
+                              boxShadow: [
+                                BoxShadow(
+                                  color: Color(0xFF8B5CF6).withOpacity(0.1),
+                                  blurRadius: 20,
+                                  offset: Offset(0, 8),
+                                ),
+                              ],
+                            ),
+                            child: Stack(
+                              alignment: Alignment.center,
+                              children: [
+                                // Karakter katmanları
+                                ...layerOrder.map((category) {
+                                  if (selectedItems.containsKey(category)) {
+                                    return Image.asset(
+                                      selectedItems[category]!,
+                                      fit: BoxFit.contain,
+                                      height: 200,
+                                    );
+                                  }
+                                  return SizedBox.shrink();
+                                }).toList(),
+                              ],
+                            ),
+                          ),
+                          SizedBox(height: 20),
+                        ],
+                      ),
+                    ),
 
-            // 🎯 ALT TAB BAR
-            Container(
-              height: 80,
-              decoration: BoxDecoration(
-                color: Color(0xFF2D2D2D),
-                boxShadow: [
-                  BoxShadow(
-                    color: Colors.black.withOpacity(0.3),
-                    blurRadius: 10,
-                    offset: Offset(0, -2),
-                  ),
-                ],
+                    // 🆕 Market Alanı - Expanded ile kalan tüm alanı kapla
+                    Expanded(
+                      child: MarketSection(
+                        onItemSelected: updateSelectedItem, 
+                        userId: userId,
+                      ),
+                    ),
+                  ],
+                ),
               ),
-              child: Row(
-                mainAxisAlignment: MainAxisAlignment.spaceEvenly,
-                children: [
-                  // Todo butonu
-                  _buildTabButton(
-                    icon: Icons.check_circle,
-                    color: Color(0xFF8B5CF6),
-                    onTap: () {
-                      Navigator.push(
-                        context,
-                        MaterialPageRoute(
-                          builder: (context) => TodoScreen(userId: userId),
-                        ),
-                      );
-                    },
+            ],
+          ),
+        ),
+      ),
+
+      // 🆕 ALT NAVIGATION BAR - TodoScreen ile tamamen aynı
+      bottomNavigationBar: Container(
+        height: 90,
+        decoration: BoxDecoration(
+          color: Color(0xFF1A1A1A),
+          boxShadow: [
+            BoxShadow(
+              color: Colors.black.withOpacity(0.3),
+              blurRadius: 10,
+              offset: Offset(0, -2),
+            ),
+          ],
+        ),
+        child: Row(
+          mainAxisAlignment: MainAxisAlignment.spaceEvenly,
+          children: [
+            _buildNavButton(
+              icon: Icons.check_circle_outline,
+              color: Color(0xFF8B5CF6),
+              onTap: () {
+                Navigator.push(
+                  context,
+                  MaterialPageRoute(
+                    builder: (context) => TodoScreen(userId: userId),
                   ),
-                  
-                  // Daily butonu
-                  _buildTabButton(
-                    icon: Icons.assignment,
-                    color: Color(0xFF06B6D4),
-                    onTap: () {
-                      Navigator.push(
-                        context,
-                        MaterialPageRoute(
-                          builder: (context) => DailyScreen(userId: widget.userId),
-                        ),
-                      );
-                    },
+                );
+              },
+            ),
+            _buildNavButton(
+              icon: Icons.assignment_outlined,
+              color: Color(0xFF06B6D4),
+              onTap: () {
+                Navigator.push(
+                  context,
+                  MaterialPageRoute(
+                    builder: (context) => DailyScreen(userId: widget.userId),
                   ),
-                  
-                  // Profile butonu (aktif - turuncu)
-                  _buildTabButton(
-                    icon: Icons.person,
-                    color: Color(0xFFF59E0B),
-                    isActive: true,
-                    onTap: () {},
+                );
+              },
+            ),
+            _buildNavButton(
+              icon: Icons.schedule,
+              color: Color(0xFF10B981),
+              onTap: () {
+                print('📅 Ajanda sayfasına gidilecek');
+                ScaffoldMessenger.of(context).showSnackBar(
+                  SnackBar(
+                    content: Text('📅 Ajanda özelliği yakında gelecek!'),
+                    backgroundColor: Color(0xFF10B981),
                   ),
-                  
-                  // Export butonu
-                  _buildTabButton(
-                    icon: Icons.trending_up,
-                    color: Color(0xFFEC4899),
-                    onTap: () async {
-                      try {
-                        await DatabaseHelper.instance.exportDatabaseToJson();
-                        _showSnackBar('📄 Database başarıyla export edildi!', Colors.green);
-                      } catch (e) {
-                        _showSnackBar('❌ Export hatası: $e', Colors.red);
-                      }
-                    },
-                  ),
-                ],
-              ),
+                );
+              },
+            ),
+            _buildNavButton(
+              icon: Icons.person_outline,
+              color: Color(0xFFF59E0B),
+              isActive: true,
+              onTap: () {},
+            ),
+            _buildNavButton(
+              icon: Icons.trending_up,
+              color: Color(0xFFEC4899),
+              onTap: () async {
+                try {
+                  await DatabaseHelper.instance.exportDatabaseToJson();
+                  _showSnackBar('📄 Database başarıyla export edildi!', Colors.green);
+                } catch (e) {
+                  _showSnackBar('❌ Export hatası: $e', Colors.red);
+                }
+              },
             ),
           ],
         ),
@@ -297,8 +360,8 @@ class _ProfileScreenState extends State<ProfileScreen> {
     );
   }
 
-  // 🎯 Tab Button
-  Widget _buildTabButton({
+  // 🆕 Navigation Button - TodoScreen ile aynı
+  Widget _buildNavButton({
     required IconData icon,
     required Color color,
     required VoidCallback onTap,
@@ -307,29 +370,24 @@ class _ProfileScreenState extends State<ProfileScreen> {
     return GestureDetector(
       onTap: onTap,
       child: Container(
-        width: 60,
-        height: 60,
+        width: 56,
+        height: 56,
         decoration: BoxDecoration(
           color: color,
-          borderRadius: BorderRadius.circular(12),
-          boxShadow: [
+          borderRadius: BorderRadius.circular(16),
+          boxShadow: isActive ? [
             BoxShadow(
-              color: color.withOpacity(0.3),
-              blurRadius: 8,
-              offset: Offset(0, 3),
+              color: color.withOpacity(0.4),
+              blurRadius: 12,
+              offset: Offset(0, 4),
             ),
-          ],
+          ] : null,
         ),
-        child: Icon(
-          icon,
-          color: Colors.white,
-          size: 28,
-        ),
+        child: Icon(icon, color: Colors.white, size: 24),
       ),
     );
   }
 
-  // 🎯 Logout Dialog
   void _showLogoutDialog() {
     showDialog(
       context: context,

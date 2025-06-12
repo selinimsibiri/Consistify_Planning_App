@@ -351,7 +351,7 @@ class _MarketSectionState extends State<MarketSection> with TickerProviderStateM
       child: Column(
         crossAxisAlignment: CrossAxisAlignment.start,
         children: [
-          // Market başlığı
+          // STORE başlığı
           Padding(
             padding: EdgeInsets.all(20),
             child: Row(
@@ -372,7 +372,7 @@ class _MarketSectionState extends State<MarketSection> with TickerProviderStateM
                 ),
                 SizedBox(width: 12),
                 Text(
-                  'MARKET',
+                  'STORE',
                   style: TextStyle(
                     fontSize: 20,
                     fontWeight: FontWeight.bold,
