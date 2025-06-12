@@ -4,6 +4,7 @@ import 'package:sayfa_yonlendirme/screens/daily_screen.dart';
 import 'package:sayfa_yonlendirme/screens/login_page.dart';
 import 'package:sayfa_yonlendirme/screens/market_section.dart';
 import 'package:sayfa_yonlendirme/db/database_helper.dart';
+import 'package:sayfa_yonlendirme/screens/planning_screen.dart';
 import 'package:sayfa_yonlendirme/screens/todo_screen.dart';
 import 'package:sayfa_yonlendirme/services/auth_service.dart';
 
@@ -327,11 +328,11 @@ class _ProfileScreenState extends State<ProfileScreen> {
               icon: Icons.schedule,
               color: Color(0xFF10B981),
               onTap: () {
-                print('📅 Ajanda sayfasına gidilecek');
-                ScaffoldMessenger.of(context).showSnackBar(
-                  SnackBar(
-                    content: Text('📅 Ajanda özelliği yakında gelecek!'),
-                    backgroundColor: Color(0xFF10B981),
+                print('📅 Planning sayfasına geçiliyor...');
+                Navigator.push(
+                  context,
+                  MaterialPageRoute(
+                    builder: (context) => PlanningScreen(userId: widget.userId),
                   ),
                 );
               },
