@@ -33,6 +33,7 @@ dependencies:
   shared_preferences: ^2.2.2
   sqflite: ^2.0.0+4
   path_provider: ^2.0.11
+  intl: ^0.18.1 
 
   # The following adds the Cupertino Icons font to your application.
   # Use with the CupertinoIcons class for iOS style icons.

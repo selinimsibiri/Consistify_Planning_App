@@ -153,6 +153,46 @@ class DatabaseHelper {
           FOREIGN KEY (item_id) REFERENCES shop_items(id)
       );
       ''');
+
+      await db.execute('''
+      CREATE TABLE daily_plans (
+        id INTEGER PRIMARY KEY AUTOINCREMENT,
+        user_id INTEGER NOT NULL,
+        plan_date TEXT NOT NULL,
+        time_slot TEXT NOT NULL,
+        title TEXT NOT NULL,
+        description TEXT,
+        created_at DATETIME DEFAULT CURRENT_TIMESTAMP,
+        FOREIGN KEY (user_id) REFERENCES users (id),
+        UNIQUE(user_id, plan_date, time_slot)
+      )
+    ''');
+
+    await db.execute('''
+    CREATE TABLE plans (
+      id INTEGER PRIMARY KEY AUTOINCREMENT,
+      user_id INTEGER NOT NULL,
+      title TEXT NOT NULL,
+      description TEXT,
+      time_slot TEXT NOT NULL,
+      date TEXT NOT NULL, 
+      created_at DATETIME DEFAULT CURRENT_TIMESTAMP,
+      FOREIGN KEY (user_id) REFERENCES users (id)
+    )
+  ''');
+
+   // 🆕 Plan-Task ilişki tablosu
+    await db.execute('''
+      CREATE TABLE plan_tasks (
+        id INTEGER PRIMARY KEY AUTOINCREMENT,
+        plan_id INTEGER NOT NULL,
+        task_id INTEGER NOT NULL,
+        created_at TEXT DEFAULT CURRENT_TIMESTAMP,
+        FOREIGN KEY (plan_id) REFERENCES plans (id) ON DELETE CASCADE,
+        FOREIGN KEY (task_id) REFERENCES tasks (id) ON DELETE CASCADE,
+        UNIQUE(plan_id, task_id)
+      )
+    ''');
     
     await insertInitialData(db);
   }
@@ -490,71 +530,74 @@ class DatabaseHelper {
   }
 
   Future<void> exportDatabaseToJson() async {
-  try {
-    final db = await database;
-    
-    final users = await db.query('users');
-    final tasks = await db.query('tasks');
-    final dailyTemplates = await db.query('daily_templates');
-    final taskCompletion = await db.query('task_completion');
-    final categories = await db.query('categories');
-    final shopItems = await db.query('shop_items');
-    final userItems = await db.query('user_items');
-    final streaks = await db.query('streaks');
-    final userSelectedItems = await db.query('user_selected_items');
-    
-    final databaseSnapshot = {
-      'export_time': DateTime.now().toString(),
-      'tables': {
-        'users': users,
-        'tasks': tasks,
-        'daily_templates': dailyTemplates,
-        'task_completion': taskCompletion,
-        'categories': categories,
-        'shop_items': shopItems,
-        'user_items': userItems,
-        'streaks': streaks,
-        'user_selected_items': userSelectedItems,
-      },
-      'summary': {
-        'total_users': users.length,
-        'total_tasks': tasks.length,
-        'active_tasks': tasks.where((t) => t['is_active'] == 1).length,
-        'completed_tasks': tasks.where((t) => t['is_completed'] == 1).length,
-        'total_daily_templates': dailyTemplates.length,
-        'active_daily_templates': dailyTemplates.where((dt) => dt['is_active'] == 1).length,
-        'total_completions': taskCompletion.length,
-        'total_categories': categories.length,
-        'total_shop_items': shopItems.length,
-        'total_user_items': userItems.length,
-        'total_streaks': streaks.length,
-        'total_selected_items': userSelectedItems.length,
-      }
-    };
-    
-    final jsonString = JsonEncoder.withIndent('  ').convert(databaseSnapshot);
-    
-    // 🎯 1. Console'a yazdır
-    print('📄 ===== DATABASE JSON START =====');
-    print(jsonString);
-    print('📄 ===== DATABASE JSON END =====');
-    
-    // 🎯 2. Clipboard'a kopyala
-    await Clipboard.setData(ClipboardData(text: jsonString));
-    
-    // 🎯 3. Dosyaya kaydet
-    final directory = await getApplicationDocumentsDirectory();
-    final file = File('${directory.path}/database_snapshot.json');
-    await file.writeAsString(jsonString);
-    
-    print('✅ JSON hazır: Console\'da + Clipboard\'ta + Dosyada');
-    print('📋 Ctrl+V ile VS Code\'a yapıştırabilirsin!');
-    
-  } catch (e) {
-    print('❌ JSON export hatası: $e');
-    rethrow;
+    try {
+      final db = await database;
+      
+      final users = await db.query('users');
+      final tasks = await db.query('tasks');
+      final dailyTemplates = await db.query('daily_templates');
+      final taskCompletion = await db.query('task_completion');
+      final categories = await db.query('categories');
+      final shopItems = await db.query('shop_items');
+      final userItems = await db.query('user_items');
+      final streaks = await db.query('streaks');
+      final userSelectedItems = await db.query('user_selected_items');
+      final plans = await db.query('plans'); // 📅 Plans tablosu eklendi
+      
+      final databaseSnapshot = {
+        'export_time': DateTime.now().toString(),
+        'tables': {
+          'users': users,
+          'tasks': tasks,
+          'daily_templates': dailyTemplates,
+          'task_completion': taskCompletion,
+          'categories': categories,
+          'shop_items': shopItems,
+          'user_items': userItems,
+          'streaks': streaks,
+          'user_selected_items': userSelectedItems,
+          'plans': plans, // 📅 Plans tablosu eklendi
+        },
+        'summary': {
+          'total_users': users.length,
+          'total_tasks': tasks.length,
+          'active_tasks': tasks.where((t) => t['is_active'] == 1).length,
+          'completed_tasks': tasks.where((t) => t['is_completed'] == 1).length,
+          'total_daily_templates': dailyTemplates.length,
+          'active_daily_templates': dailyTemplates.where((dt) => dt['is_active'] == 1).length,
+          'total_completions': taskCompletion.length,
+          'total_categories': categories.length,
+          'total_shop_items': shopItems.length,
+          'total_user_items': userItems.length,
+          'total_streaks': streaks.length,
+          'total_selected_items': userSelectedItems.length,
+          'total_plans': plans.length, // 📅 Plans sayısı eklendi
+        }
+      };
+      
+      final jsonString = JsonEncoder.withIndent('  ').convert(databaseSnapshot);
+      
+      // 🎯 1. Console'a yazdır
+      print('📄 ===== DATABASE JSON START =====');
+      print(jsonString);
+      print('📄 ===== DATABASE JSON END =====');
+      
+      // 🎯 2. Clipboard'a kopyala
+      await Clipboard.setData(ClipboardData(text: jsonString));
+      
+      // 🎯 3. Dosyaya kaydet
+      final directory = await getApplicationDocumentsDirectory();
+      final file = File('${directory.path}/database_snapshot.json');
+      await file.writeAsString(jsonString);
+      
+      print('✅ JSON hazır: Console\'da + Clipboard\'ta + Dosyada');
+      print('📋 Ctrl+V ile VS Code\'a yapıştırabilirsin!');
+      
+    } catch (e) {
+      print('❌ JSON export hatası: $e');
+      rethrow;
+    }
   }
-}
 
   // Yeni kullanıcıya tüm body'leri hediye et
   Future<void> giveAllBodiesToNewUser(int userId) async {
