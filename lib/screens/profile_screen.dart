@@ -1,5 +1,5 @@
 import 'package:flutter/material.dart';
-import 'package:flutter/services.dart'; // 🆕 Eklendi
+import 'package:flutter/services.dart';
 import 'package:sayfa_yonlendirme/screens/daily_screen.dart';
 import 'package:sayfa_yonlendirme/screens/login_page.dart';
 import 'package:sayfa_yonlendirme/screens/market_section.dart';
@@ -7,6 +7,10 @@ import 'package:sayfa_yonlendirme/db/database_helper.dart';
 import 'package:sayfa_yonlendirme/screens/planning_screen.dart';
 import 'package:sayfa_yonlendirme/screens/todo_screen.dart';
 import 'package:sayfa_yonlendirme/services/auth_service.dart';
+import 'package:sayfa_yonlendirme/utils/app_routes.dart';
+import 'package:sayfa_yonlendirme/utils/navigation_utils.dart';
+import '../utils/dialog_utils.dart';
+
 
 class ProfileScreen extends StatefulWidget {
   final int userId;
@@ -126,7 +130,7 @@ class _ProfileScreenState extends State<ProfileScreen> {
                   children: [
                     // Sol -🚪 Logout icon
                     GestureDetector(
-                      onTap: _showLogoutDialog,
+                      onTap: () => DialogUtils.showLogoutDialog(context),
                       child: Container(
                         width: 40,
                         height: 40,
@@ -284,7 +288,7 @@ class _ProfileScreenState extends State<ProfileScreen> {
         ),
       ),
 
-      // 🆕 ALT NAVIGATION BAR - TodoScreen ile tamamen aynı
+      // ALT NAVIGATION BAR
       bottomNavigationBar: Container(
         height: 90,
         decoration: BoxDecoration(
@@ -303,46 +307,30 @@ class _ProfileScreenState extends State<ProfileScreen> {
             _buildNavButton(
               icon: Icons.check_circle_outline,
               color: Color(0xFF8B5CF6),
-              onTap: () {
-                Navigator.push(
-                  context,
-                  MaterialPageRoute(
-                    builder: (context) => TodoScreen(userId: userId),
-                  ),
-                );
-              },
+              onTap: () => NavigationUtils.goToTodo(
+                context, 
+                widget.userId, 
+              ),
             ),
             _buildNavButton(
               icon: Icons.assignment_outlined,
               color: Color(0xFF06B6D4),
-              onTap: () {
-                Navigator.push(
-                  context,
-                  MaterialPageRoute(
-                    builder: (context) => DailyScreen(userId: widget.userId),
-                  ),
-                );
-              },
+              onTap: () => NavigationUtils.goToDaily(context, widget.userId),
             ),
+
             _buildNavButton(
               icon: Icons.schedule,
               color: Color(0xFF10B981),
-              onTap: () {
-                print('📅 Planning sayfasına geçiliyor...');
-                Navigator.push(
-                  context,
-                  MaterialPageRoute(
-                    builder: (context) => PlanningScreen(userId: widget.userId),
-                  ),
-                );
-              },
+              onTap: () => NavigationUtils.goToPlanning(context, widget.userId),
             ),
+
             _buildNavButton(
               icon: Icons.person_outline,
               color: Color(0xFFF59E0B),
               isActive: true,
               onTap: () {},
             ),
+
             _buildNavButton(
               icon: Icons.trending_up,
               color: Color(0xFFEC4899),

@@ -192,7 +192,9 @@ class DatabaseHelper {
         FOREIGN KEY (task_id) REFERENCES tasks (id) ON DELETE CASCADE,
         UNIQUE(plan_id, task_id)
       )
-    ''');
+    '''); 
+
+    
     
     await insertInitialData(db);
   }
@@ -280,40 +282,66 @@ class DatabaseHelper {
     await db.insert('categories', {'name': 'accs', 'icon_path': 'assets/category_icons/accs.png'}); //7
     await db.insert('categories', {'name': 'hat', 'icon_path': 'assets/category_icons/hat.png'}); //8
 
-  // Insert Shop Items - BODY (category_id: 1)
-  await db.insert('shop_items', {'name': 'body1', 'category_id': 1, 'price': 5});
-  await db.insert('shop_items', {'name': 'body2', 'category_id': 1, 'price': 10});
-  await db.insert('shop_items', {'name': 'body3', 'category_id': 1, 'price': 10});
-  await db.insert('shop_items', {'name': 'body4', 'category_id': 1, 'price': 10});
-  await db.insert('shop_items', {'name': 'body5', 'category_id': 1, 'price': 10});
-  await db.insert('shop_items', {'name': 'body6', 'category_id': 1, 'price': 10});
-  await db.insert('shop_items', {'name': 'body7', 'category_id': 1, 'price': 10});
+    // Insert Shop Items - BODY (category_id: 1)
+    await db.insert('shop_items', {'name': 'body1', 'category_id': 1, 'price': 5});
+    await db.insert('shop_items', {'name': 'body2', 'category_id': 1, 'price': 10});
+    await db.insert('shop_items', {'name': 'body3', 'category_id': 1, 'price': 10});
+    await db.insert('shop_items', {'name': 'body4', 'category_id': 1, 'price': 10});
+    await db.insert('shop_items', {'name': 'body5', 'category_id': 1, 'price': 10});
+    await db.insert('shop_items', {'name': 'body6', 'category_id': 1, 'price': 10});
+    await db.insert('shop_items', {'name': 'body7', 'category_id': 1, 'price': 10});
 
-  // Insert Shop Items - EYES (category_id: 2) ⭐
-  await db.insert('shop_items', {'name': 'eyes1', 'category_id': 2, 'price': 5});
-  await db.insert('shop_items', {'name': 'eyes2', 'category_id': 2, 'price': 10});
-  await db.insert('shop_items', {'name': 'eyes3', 'category_id': 2, 'price': 10});
-  await db.insert('shop_items', {'name': 'eyes4', 'category_id': 2, 'price': 10});
-  await db.insert('shop_items', {'name': 'eyes5', 'category_id': 2, 'price': 10});
-  await db.insert('shop_items', {'name': 'eyes6', 'category_id': 2, 'price': 10});
-  await db.insert('shop_items', {'name': 'eyes7', 'category_id': 2, 'price': 10});
+    // Insert Shop Items - EYES (category_id: 2) ⭐
+    await db.insert('shop_items', {'name': 'eyes1', 'category_id': 2, 'price': 5});
+    await db.insert('shop_items', {'name': 'eyes2', 'category_id': 2, 'price': 10});
+    await db.insert('shop_items', {'name': 'eyes3', 'category_id': 2, 'price': 10});
+    await db.insert('shop_items', {'name': 'eyes4', 'category_id': 2, 'price': 10});
+    await db.insert('shop_items', {'name': 'eyes5', 'category_id': 2, 'price': 10});
+    await db.insert('shop_items', {'name': 'eyes6', 'category_id': 2, 'price': 10});
+    await db.insert('shop_items', {'name': 'eyes7', 'category_id': 2, 'price': 10});
 
-  // Insert Shop Items - HAIR (category_id: 4) ⭐
-  await db.insert('shop_items', {'name': 'hair1', 'category_id': 4, 'price': 5});
-  await db.insert('shop_items', {'name': 'hair2', 'category_id': 4, 'price': 10});
-  await db.insert('shop_items', {'name': 'hair3', 'category_id': 4, 'price': 10});
-  await db.insert('shop_items', {'name': 'hair4', 'category_id': 4, 'price': 10});
-  await db.insert('shop_items', {'name': 'hair5', 'category_id': 4, 'price': 10});
-  await db.insert('shop_items', {'name': 'hair6', 'category_id': 4, 'price': 10});
-  await db.insert('shop_items', {'name': 'hair7', 'category_id': 4, 'price': 10});
-  await db.insert('shop_items', {'name': 'hair8', 'category_id': 4, 'price': 10});
-  await db.insert('shop_items', {'name': 'hair9', 'category_id': 4, 'price': 10});
-  await db.insert('shop_items', {'name': 'hair10', 'category_id': 4, 'price': 10});
-  await db.insert('shop_items', {'name': 'hair11', 'category_id': 4, 'price': 10});
-  await db.insert('shop_items', {'name': 'hair12', 'category_id': 4, 'price': 10});
-  await db.insert('shop_items', {'name': 'hair13', 'category_id': 4, 'price': 10});
-  // HAIR (category_id: 4)
-  // await db.insert('shop_items', {'name': 'hair1', 'category_id': 4, 'price': 5});
+    // Insert Shop Items - HAIR (category_id: 4) ⭐
+    await db.insert('shop_items', {'name': 'hair1', 'category_id': 4, 'price': 5});
+    await db.insert('shop_items', {'name': 'hair2', 'category_id': 4, 'price': 10});
+    await db.insert('shop_items', {'name': 'hair3', 'category_id': 4, 'price': 10});
+    await db.insert('shop_items', {'name': 'hair4', 'category_id': 4, 'price': 10});
+    await db.insert('shop_items', {'name': 'hair5', 'category_id': 4, 'price': 10});
+    await db.insert('shop_items', {'name': 'hair6', 'category_id': 4, 'price': 10});
+    await db.insert('shop_items', {'name': 'hair7', 'category_id': 4, 'price': 10});
+    await db.insert('shop_items', {'name': 'hair8', 'category_id': 4, 'price': 10});
+    await db.insert('shop_items', {'name': 'hair9', 'category_id': 4, 'price': 10});
+    await db.insert('shop_items', {'name': 'hair10', 'category_id': 4, 'price': 10});
+    await db.insert('shop_items', {'name': 'hair11', 'category_id': 4, 'price': 10});
+    await db.insert('shop_items', {'name': 'hair12', 'category_id': 4, 'price': 10});
+    await db.insert('shop_items', {'name': 'hair13', 'category_id': 4, 'price': 10});
+    await db.insert('shop_items', {'name': 'hair14', 'category_id': 4, 'price': 10});
+    await db.insert('shop_items', {'name': 'hair15', 'category_id': 4, 'price': 10});
+    await db.insert('shop_items', {'name': 'hair16', 'category_id': 4, 'price': 10});
+    await db.insert('shop_items', {'name': 'hair17', 'category_id': 4, 'price': 10});
+    await db.insert('shop_items', {'name': 'hair18', 'category_id': 4, 'price': 10});
+    await db.insert('shop_items', {'name': 'hair19', 'category_id': 4, 'price': 10});
+    await db.insert('shop_items', {'name': 'hair20', 'category_id': 4, 'price': 10});
+    await db.insert('shop_items', {'name': 'hair21', 'category_id': 4, 'price': 10});
+    await db.insert('shop_items', {'name': 'hair22', 'category_id': 4, 'price': 10});
+    // BOTTOM (category_id: 6)
+    await db.insert('shop_items', {'name': 'bottom1', 'category_id': 6, 'price': 5});
+    await db.insert('shop_items', {'name': 'bottom2', 'category_id': 6, 'price': 5});
+    await db.insert('shop_items', {'name': 'bottom3', 'category_id': 6, 'price': 5});
+
+    // TOPS (category_id: 5)
+    await db.insert('shop_items', {'name': 'top1', 'category_id': 5, 'price': 5});
+    await db.insert('shop_items', {'name': 'top2', 'category_id': 5, 'price': 5});
+    await db.insert('shop_items', {'name': 'top3', 'category_id': 5, 'price': 5});
+    await db.insert('shop_items', {'name': 'top4', 'category_id': 5, 'price': 5});
+    await db.insert('shop_items', {'name': 'top5', 'category_id': 5, 'price': 5});
+    await db.insert('shop_items', {'name': 'top6', 'category_id': 5, 'price': 5});
+    
+    // SHOES (category_id: 7)
+    await db.insert('shop_items', {'name': 'shoes1', 'category_id': 7, 'price': 5});
+    await db.insert('shop_items', {'name': 'shoes2',   'category_id': 7, 'price': 5});
+    await db.insert('shop_items', {'name': 'shoes3', 'category_id': 7, 'price': 5});
+    await db.insert('shop_items', {'name': 'shoes4', 'category_id': 7, 'price': 5});
+
 
     print("✅ Initial data inserted!");
   }
