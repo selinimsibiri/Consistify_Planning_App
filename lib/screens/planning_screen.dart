@@ -5,6 +5,9 @@ import 'package:sayfa_yonlendirme/db/database_helper.dart';
 import 'package:sayfa_yonlendirme/screens/todo_screen.dart';
 import 'package:sayfa_yonlendirme/screens/daily_screen.dart';
 import 'package:sayfa_yonlendirme/screens/profile_screen.dart';
+import 'package:sayfa_yonlendirme/utils/app_routes.dart';
+import 'package:sayfa_yonlendirme/utils/dialog_utils.dart';
+import 'package:sayfa_yonlendirme/utils/navigation_utils.dart';
 import 'package:sayfa_yonlendirme/widgets/animations/coin_animation_overlay.dart';
 
 class PlanningScreen extends StatefulWidget {
@@ -128,14 +131,15 @@ class _PlanningScreenState extends State<PlanningScreen> {
                     child: Row(
                       children: [
                         // 🚪 Logout icon
-                        Container(
-                          width: 40,
-                          height: 40,
-                          decoration: BoxDecoration(
-                            color: Color(0xFF404040),
-                            borderRadius: BorderRadius.circular(12),
-                          ),
-                          child: Center(
+                        GestureDetector(
+                          onTap: () => DialogUtils.showLogoutDialog(context),
+                          child: Container(
+                            width: 40,
+                            height: 40,
+                            decoration: BoxDecoration(
+                              color: Color(0xFF404040),
+                              borderRadius: BorderRadius.circular(12),
+                            ),
                             child: Icon(
                               Icons.logout,
                               color: Colors.white,
@@ -143,7 +147,6 @@ class _PlanningScreenState extends State<PlanningScreen> {
                             ),
                           ),
                         ),
-                        
                         // 📅 DAILY PLANNING başlığı
                         Expanded(
                           child: Container(
@@ -306,46 +309,30 @@ class _PlanningScreenState extends State<PlanningScreen> {
             _buildNavButton(
               icon: Icons.check_circle_outline,
               color: Color(0xFF8B5CF6),
-              onTap: () {
-                Navigator.push(
-                  context,
-                  MaterialPageRoute(
-                    builder: (context) => TodoScreen(userId: widget.userId),
-                  ),
-                );
-              },
+              onTap: () => NavigationUtils.goToTodo(
+                context, 
+                widget.userId, 
+              ),
             ),
             _buildNavButton(
               icon: Icons.assignment_outlined,
               color: Color(0xFF06B6D4),
-              onTap: () {
-                Navigator.push(
-                  context,
-                  MaterialPageRoute(
-                    builder: (context) => DailyScreen(userId: widget.userId),
-                  ),
-                );
-              },
+              onTap: () => NavigationUtils.goToDaily(context, widget.userId),
             ),
-            // 🆕 Aktif Planlama butonu - Ortada
+
             _buildNavButton(
               icon: Icons.schedule,
               color: Color(0xFF10B981),
-              isActive: true, // 🎯 Bu sayfa aktif
+              isActive: true, // Bu sayfa aktif
               onTap: () {},
             ),
+
             _buildNavButton(
               icon: Icons.person_outline,
               color: Color(0xFFF59E0B),
-              onTap: () {
-                Navigator.push(
-                  context,
-                  MaterialPageRoute(
-                    builder: (context) => ProfileScreen(userId: widget.userId),
-                  ),
-                );
-              },
+              onTap: () => NavigationUtils.goToProfile(context, widget.userId),
             ),
+
             _buildNavButton(
               icon: Icons.trending_up,
               color: Color(0xFFEC4899),

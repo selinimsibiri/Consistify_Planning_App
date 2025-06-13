@@ -7,6 +7,7 @@ import 'package:sayfa_yonlendirme/models/user.dart';
 import 'package:sayfa_yonlendirme/screens/login_page.dart';
 import 'package:sayfa_yonlendirme/screens/profile_screen.dart';
 import 'package:sayfa_yonlendirme/services/auth_service.dart';
+import 'package:sayfa_yonlendirme/utils/app_routes.dart';
 
 class SignUpPage extends StatefulWidget {
   const SignUpPage({super.key});
@@ -335,7 +336,10 @@ class _SignUpPageState extends State<SignUpPage> {
                         // yonlendirme
                         Navigator.push(
                           context,
-                          MaterialPageRoute(builder: (context) => LogInPage()),
+                          AppRoutes.createRoute(
+                            LogInPage(),
+                            type: RouteType.fade, // 🎯 Fade animasyonu
+                          ),
                         );
                       },
                       child: Text(

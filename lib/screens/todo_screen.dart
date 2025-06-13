@@ -2,7 +2,11 @@ import 'package:flutter/material.dart';
 import 'package:flutter/services.dart';
 import 'package:sayfa_yonlendirme/db/database_helper.dart';
 import 'package:sayfa_yonlendirme/screens/daily_screen.dart';
+import 'package:sayfa_yonlendirme/screens/planning_screen.dart';
 import 'package:sayfa_yonlendirme/screens/profile_screen.dart';
+import 'package:sayfa_yonlendirme/utils/app_routes.dart';
+import 'package:sayfa_yonlendirme/utils/dialog_utils.dart';
+import 'package:sayfa_yonlendirme/utils/navigation_utils.dart';
 import 'package:sayfa_yonlendirme/widgets/animations/coin_animation_overlay.dart';
 
 class TodoScreen extends StatefulWidget {
@@ -217,15 +221,15 @@ class _TodoScreenState extends State<TodoScreen> {
                     padding: EdgeInsets.symmetric(horizontal: 20, vertical: 16),
                     child: Row(
                       children: [
-                        // 🚪 Logout icon
-                        Container(
-                          width: 40,
-                          height: 40,
-                          decoration: BoxDecoration(
-                            color: Color(0xFF404040),
-                            borderRadius: BorderRadius.circular(12),
-                          ),
-                          child: Center(
+                        GestureDetector(
+                          onTap: () => DialogUtils.showLogoutDialog(context),
+                          child: Container(
+                            width: 40,
+                            height: 40,
+                            decoration: BoxDecoration(
+                              color: Color(0xFF404040),
+                              borderRadius: BorderRadius.circular(12),
+                            ),
                             child: Icon(
                               Icons.logout,
                               color: Colors.white,
@@ -406,44 +410,23 @@ class _TodoScreenState extends State<TodoScreen> {
               isActive: true,
               onTap: () {},
             ),
+            // Daily butonu
             _buildNavButton(
               icon: Icons.assignment_outlined,
               color: Color(0xFF06B6D4),
-              onTap: () {
-                Navigator.push(
-                  context,
-                  MaterialPageRoute(
-                    builder: (context) => DailyScreen(userId: widget.userId),
-                  ),
-                );
-              },
+              onTap: () => NavigationUtils.goToDaily(context, widget.userId),
             ),
-            // 🆕 Yeni Ajanda/Planlama butonu - Ortada
-            _buildNavButton(
-              icon: Icons.schedule,
-              color: Color(0xFF10B981), // 🟢 Yeşil renk
-              onTap: () {
-                // TODO: Ajanda/Planlama sayfasına git
-                print('📅 Ajanda sayfasına gidilecek');
-                ScaffoldMessenger.of(context).showSnackBar(
-                  SnackBar(
-                    content: Text('📅 Ajanda özelliği yakında gelecek!'),
-                    backgroundColor: Color(0xFF10B981),
-                  ),
-                );
-              },
-            ),
+
+            // Planning sayfası
+              _buildNavButton(
+                icon: Icons.schedule,
+                color: Color(0xFF10B981),
+                onTap: () => NavigationUtils.goToPlanning(context, widget.userId),
+              ),
             _buildNavButton(
               icon: Icons.person_outline,
               color: Color(0xFFF59E0B),
-              onTap: () {
-                Navigator.push(
-                  context,
-                  MaterialPageRoute(
-                    builder: (context) => ProfileScreen(userId: widget.userId),
-                  ),
-                );
-              },
+              onTap: () => NavigationUtils.goToProfile(context, widget.userId),
             ),
             _buildNavButton(
               icon: Icons.trending_up,
@@ -858,16 +841,16 @@ class _AddTaskDialogState extends State<AddTaskDialog> {
     widget.onTaskAdded();
     Navigator.pop(context);
     
-    ScaffoldMessenger.of(context).showSnackBar(
-      SnackBar(
-        content: Text('Task added successfully! (+${_coinReward.round()} 🪙)'),
-        backgroundColor: Color(0xFF8B5CF6),
-        behavior: SnackBarBehavior.floating,
-        shape: RoundedRectangleBorder(
-          borderRadius: BorderRadius.circular(12),
-        ),
-      ),
-    );
+    // ScaffoldMessenger.of(context).showSnackBar(
+    //   SnackBar(
+    //     content: Text('Task added successfully! (+${_coinReward.round()} 🪙)'),
+    //     backgroundColor: Color(0xFF8B5CF6),
+    //     behavior: SnackBarBehavior.floating,
+    //     shape: RoundedRectangleBorder(
+    //       borderRadius: BorderRadius.circular(12),
+    //     ),
+    //   ),
+    // );
   }
 
   @override

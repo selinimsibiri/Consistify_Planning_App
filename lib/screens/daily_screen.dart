@@ -1,8 +1,12 @@
 import 'package:flutter/material.dart';
 import 'package:flutter/services.dart';
 import 'package:sayfa_yonlendirme/db/database_helper.dart';
+import 'package:sayfa_yonlendirme/screens/planning_screen.dart';
 import 'package:sayfa_yonlendirme/screens/todo_screen.dart';
 import 'package:sayfa_yonlendirme/screens/profile_screen.dart';
+import 'package:sayfa_yonlendirme/utils/app_routes.dart';
+import 'package:sayfa_yonlendirme/utils/dialog_utils.dart';
+import 'package:sayfa_yonlendirme/utils/navigation_utils.dart';
 
 class DailyScreen extends StatefulWidget {
   final int userId;
@@ -168,14 +172,15 @@ class _DailyScreenState extends State<DailyScreen> {
                     child: Row(
                       children: [
                         // 🚪 Logout icon
-                        Container(
-                          width: 40,
-                          height: 40,
-                          decoration: BoxDecoration(
-                            color: Color(0xFF404040),
-                            borderRadius: BorderRadius.circular(12),
-                          ),
-                          child: Center(
+                        GestureDetector(
+                          onTap: () => DialogUtils.showLogoutDialog(context),
+                          child: Container(
+                            width: 40,
+                            height: 40,
+                            decoration: BoxDecoration(
+                              color: Color(0xFF404040),
+                              borderRadius: BorderRadius.circular(12),
+                            ),
                             child: Icon(
                               Icons.logout,
                               color: Colors.white,
@@ -183,7 +188,6 @@ class _DailyScreenState extends State<DailyScreen> {
                             ),
                           ),
                         ),
-
                         // 📝 DAILIES başlığı - Dinamik genişlik
                         Expanded(
                           child: Container(
@@ -329,17 +333,11 @@ class _DailyScreenState extends State<DailyScreen> {
             _buildNavButton(
               icon: Icons.check_circle_outline,
               color: Color(0xFF8B5CF6),
-              onTap: () async {
-                final result = await Navigator.push(
-                  context,
-                  MaterialPageRoute(
-                    builder: (context) => TodoScreen(userId: widget.userId),
-                  ),
-                );
-                if (result == 'refresh') {
-                  _loadDailyTasks();
-                }
-              },
+              onTap: () => NavigationUtils.goToTodo(
+                context, 
+                widget.userId, 
+                onRefresh: _loadDailyTasks,
+              ),
             ),
             _buildNavButton(
               icon: Icons.assignment_outlined,
@@ -347,32 +345,16 @@ class _DailyScreenState extends State<DailyScreen> {
               isActive: true, // Daily aktif
               onTap: () {},
             ),
-            // 🆕 Yeni Ajanda/Planlama butonu - Ortada
+            // Planning sayfası
             _buildNavButton(
               icon: Icons.schedule,
-              color: Color(0xFF10B981), // 🟢 Yeşil renk
-              onTap: () {
-                // TODO: Ajanda/Planlama sayfasına git
-                print('📅 Ajanda sayfasına gidilecek');
-                ScaffoldMessenger.of(context).showSnackBar(
-                  SnackBar(
-                    content: Text('📅 Ajanda özelliği yakında gelecek!'),
-                    backgroundColor: Color(0xFF10B981),
-                  ),
-                );
-              },
+              color: Color(0xFF10B981),
+              onTap: () => NavigationUtils.goToPlanning(context, widget.userId),
             ),
             _buildNavButton(
               icon: Icons.person_outline,
               color: Color(0xFFF59E0B),
-              onTap: () {
-                Navigator.push(
-                  context,
-                  MaterialPageRoute(
-                    builder: (context) => ProfileScreen(userId: widget.userId),
-                  ),
-                );
-              },
+              onTap: () => NavigationUtils.goToProfile(context, widget.userId),
             ),
             _buildNavButton(
               icon: Icons.trending_up,
@@ -1389,16 +1371,16 @@ class _AddDailyDialogState extends State<AddDailyDialog> {
     await DatabaseHelper.instance.generateDailyTasksForUser(widget.userId);
 
     Navigator.pop(context);
-    widget.onDailyAdded(); // 🔧 Bu satırı popup kapandıktan sonra çağır
+    widget.onDailyAdded(); // Bu satırı popup kapandıktan sonra çağır
     
-    ScaffoldMessenger.of(context).showSnackBar(
-      SnackBar(
-        content: Text('Daily added successfully! (+${_coinReward.round()} 🪙)'),
-        backgroundColor: Color(0xFF06B6D4),
-        behavior: SnackBarBehavior.floating,
-        shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(12)),
-      ),
-    );
+    // ScaffoldMessenger.of(context).showSnackBar(
+    //   SnackBar(
+    //     content: Text('Daily added successfully! (+${_coinReward.round()} 🪙)'),
+    //     backgroundColor: Color(0xFF06B6D4),
+    //     behavior: SnackBarBehavior.floating,
+    //     shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(12)),
+    //   ),
+    // );
   }
 
 

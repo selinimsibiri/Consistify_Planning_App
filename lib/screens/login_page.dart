@@ -5,7 +5,9 @@ import 'package:flutter/material.dart';
 import 'package:sayfa_yonlendirme/db/database_helper.dart';
 import 'package:sayfa_yonlendirme/screens/profile_screen.dart';
 import 'package:sayfa_yonlendirme/screens/signup_page.dart';
+import 'package:sayfa_yonlendirme/screens/todo_screen.dart';
 import 'package:sayfa_yonlendirme/services/auth_service.dart';
+import 'package:sayfa_yonlendirme/utils/app_routes.dart';
 
 class LogInPage extends StatefulWidget {
   const LogInPage({super.key});
@@ -46,7 +48,7 @@ class _LogInPageState extends State<LogInPage> {
       Navigator.pushReplacement(
         context,
         MaterialPageRoute(
-          builder: (context) => ProfileScreen(userId: user.id!), // userId'yi ProfileScreen'e gönder
+          builder: (context) => TodoScreen(userId: user.id!), // userId'yi ProfileScreen'e gönder
         ),
       );
       
@@ -203,11 +205,10 @@ class _LogInPageState extends State<LogInPage> {
                   Center(
                     child: InkWell(
                       onTap: () {
-                        // yönlendirme
                         // Navigator.push(
                         //   context,
                         //   MaterialPageRoute(
-                        //     builder: (context) => ProfileScreen(userId: null,),
+                        //     builder: (context) => SignUpPage(),
                         //   ),
                         // );
                       },
@@ -272,7 +273,10 @@ class _LogInPageState extends State<LogInPage> {
                           // yonlendirme
                           Navigator.push(
                             context,
-                            MaterialPageRoute(builder: (context) => SignUpPage()),
+                            AppRoutes.createRoute(
+                              SignUpPage(),
+                              type: RouteType.fade,
+                            ),
                           );
                         },
                         child: Text(
