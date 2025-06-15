@@ -1,18 +1,20 @@
 import 'package:flutter/material.dart';
 import 'package:flutter/services.dart';
-import 'package:sayfa_yonlendirme/screens/daily_screen.dart';
 import 'package:sayfa_yonlendirme/screens/login_page.dart';
 import 'package:sayfa_yonlendirme/screens/market_section.dart';
 import 'package:sayfa_yonlendirme/db/database_helper.dart';
-import 'package:sayfa_yonlendirme/screens/planning_screen.dart';
-import 'package:sayfa_yonlendirme/screens/todo_screen.dart';
 import 'package:sayfa_yonlendirme/services/auth_service.dart';
-import 'package:sayfa_yonlendirme/utils/app_routes.dart';
 import 'package:sayfa_yonlendirme/utils/navigation_utils.dart';
 import '../utils/dialog_utils.dart';
 
-
 class ProfileScreen extends StatefulWidget {
+  /*
+    * Kullanıcı profil ekranı
+    * - Kullanıcının kişisel bilgilerini görüntüler ve düzenleme imkanı sağlar
+    * - Coin bakiyesi, tamamlanan görev sayısı gibi istatistikleri gösterir
+    * - Profil fotoğrafı, kullanıcı adı ve diğer bilgileri yönetir
+    * - Hesap ayarları ve çıkış işlemlerini içerir
+ */
   final int userId;
   const ProfileScreen({super.key, required this.userId});
 
@@ -21,6 +23,18 @@ class ProfileScreen extends StatefulWidget {
 }
 
 class _ProfileScreenState extends State<ProfileScreen> {
+  /*
+    * ProfileScreen'in State sınıfı
+    * - Kullanıcının seçili karakteri ve coin bakiyesini yönetir
+    * - Karakter katmanlarını doğru sırayla gösterir (body, shoes, bottom, top, vb.)
+    * - MarketSection ile entegre çalışarak item seçimlerini günceller
+    * - TodoScreen ile tutarlı UI tasarımı kullanır (gradient, shadow, button stilleri)
+    * - Alt navigation bar ile diğer ekranlar arası geçiş sağlar
+    * - Logout işlemi ve database export fonksiyonlarını içerir
+    * - Karakter görselini gradient arka plan üzerinde merkezi olarak gösterir
+    * - Coin gösterimi ve güncelleme işlemlerini yönetir
+    * - Status bar ayarları ve genel tema tutarlılığını sağlar
+ */
   late int userId;
   Map<String, String> selectedItems = {};
   int userCoins = 0;
@@ -85,7 +99,7 @@ class _ProfileScreenState extends State<ProfileScreen> {
   @override
   Widget build(BuildContext context) {
     return Scaffold(
-      // 🆕 Status bar ayarları - TodoScreen ile aynı
+      // Status bar ayarları
       appBar: PreferredSize(
         preferredSize: Size.zero,
         child: AppBar(
@@ -99,7 +113,7 @@ class _ProfileScreenState extends State<ProfileScreen> {
         ),
       ),
       body: Container(
-        // 🆕 Arka plan gradient - TodoScreen ile aynı
+        // Arka plan gradient
         decoration: BoxDecoration(
           gradient: LinearGradient(
             begin: Alignment.topCenter,
@@ -113,7 +127,7 @@ class _ProfileScreenState extends State<ProfileScreen> {
         child: SafeArea(
           child: Column(
             children: [
-              // 🆕 ÜST BAR - TodoScreen ile aynı stil
+              // ÜST BAR
               Container(
                 decoration: BoxDecoration(
                   color: Color(0xFF1A1A1A),
@@ -128,7 +142,7 @@ class _ProfileScreenState extends State<ProfileScreen> {
                 padding: EdgeInsets.symmetric(horizontal: 20, vertical: 16),
                 child: Row(
                   children: [
-                    // Sol -🚪 Logout icon
+                    // Logout icon
                     GestureDetector(
                       onTap: () => DialogUtils.showLogoutDialog(context),
                       child: Container(
@@ -146,7 +160,7 @@ class _ProfileScreenState extends State<ProfileScreen> {
                       ),
                     ),
                     
-                    // 🆕 PROFILE başlığı - TodoScreen ile aynı stil
+                    // PROFILE başlığı
                     Expanded(
                       child: Container(
                         margin: EdgeInsets.symmetric(horizontal: 16),
@@ -180,7 +194,7 @@ class _ProfileScreenState extends State<ProfileScreen> {
                       ),
                     ),
                     
-                    // 🆕 Coin - TodoScreen streak ile aynı stil
+                    // Coin
                     Container(
                       padding: EdgeInsets.symmetric(horizontal: 12, vertical: 8),
                       decoration: BoxDecoration(
@@ -216,11 +230,11 @@ class _ProfileScreenState extends State<ProfileScreen> {
                 ),
               ),
 
-              // 🆕 İçerik alanı - Market alt bara bitişik olacak
+              // İçerik alanı
               Expanded(
                 child: Column(
                   children: [
-                    // 🎯 Karakter Görseli - Padding ile
+                    // Karakter Görseli
                     Padding(
                       padding: EdgeInsets.symmetric(horizontal: 20),
                       child: Column(
@@ -273,7 +287,7 @@ class _ProfileScreenState extends State<ProfileScreen> {
                       ),
                     ),
 
-                    // 🆕 Market Alanı - Expanded ile kalan tüm alanı kapla
+                    // Market Alanı - Expanded ile kalan tüm alan kaplandı
                     Expanded(
                       child: MarketSection(
                         onItemSelected: updateSelectedItem, 
@@ -330,18 +344,10 @@ class _ProfileScreenState extends State<ProfileScreen> {
               isActive: true,
               onTap: () {},
             ),
-
             _buildNavButton(
               icon: Icons.trending_up,
               color: Color(0xFFEC4899),
-              onTap: () async {
-                try {
-                  await DatabaseHelper.instance.exportDatabaseToJson();
-                  _showSnackBar('📄 Database başarıyla export edildi!', Colors.green);
-                } catch (e) {
-                  _showSnackBar('❌ Export hatası: $e', Colors.red);
-                }
-              },
+              onTap: () => NavigationUtils.goToStatistics(context, widget.userId),
             ),
           ],
         ),
@@ -349,7 +355,6 @@ class _ProfileScreenState extends State<ProfileScreen> {
     );
   }
 
-  // 🆕 Navigation Button - TodoScreen ile aynı
   Widget _buildNavButton({
     required IconData icon,
     required Color color,
@@ -374,53 +379,6 @@ class _ProfileScreenState extends State<ProfileScreen> {
         ),
         child: Icon(icon, color: Colors.white, size: 24),
       ),
-    );
-  }
-
-  void _showLogoutDialog() {
-    showDialog(
-      context: context,
-      builder: (BuildContext context) {
-        return AlertDialog(
-          backgroundColor: Color(0xFF2D2D2D),
-          shape: RoundedRectangleBorder(
-            borderRadius: BorderRadius.circular(16),
-          ),
-          title: Text(
-            'Çıkış Yap',
-            style: TextStyle(color: Colors.white),
-          ),
-          content: Text(
-            'Hesabınızdan çıkış yapmak istediğinizden emin misiniz?',
-            style: TextStyle(color: Colors.white70),
-          ),
-          actions: [
-            TextButton(
-              onPressed: () => Navigator.of(context).pop(),
-              child: Text(
-                'İptal',
-                style: TextStyle(color: Colors.white70),
-              ),
-            ),
-            ElevatedButton(
-              onPressed: () {
-                Navigator.of(context).pop();
-                _logout();
-              },
-              style: ElevatedButton.styleFrom(
-                backgroundColor: Color(0xFFEC4899),
-                shape: RoundedRectangleBorder(
-                  borderRadius: BorderRadius.circular(8),
-                ),
-              ),
-              child: Text(
-                'Çıkış Yap',
-                style: TextStyle(color: Colors.white),
-              ),
-            ),
-          ],
-        );
-      },
     );
   }
 

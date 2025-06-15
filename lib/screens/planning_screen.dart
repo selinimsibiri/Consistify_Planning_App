@@ -2,15 +2,17 @@ import 'package:flutter/material.dart';
 import 'package:flutter/services.dart';
 import 'package:intl/intl.dart';
 import 'package:sayfa_yonlendirme/db/database_helper.dart';
-import 'package:sayfa_yonlendirme/screens/todo_screen.dart';
-import 'package:sayfa_yonlendirme/screens/daily_screen.dart';
-import 'package:sayfa_yonlendirme/screens/profile_screen.dart';
-import 'package:sayfa_yonlendirme/utils/app_routes.dart';
 import 'package:sayfa_yonlendirme/utils/dialog_utils.dart';
 import 'package:sayfa_yonlendirme/utils/navigation_utils.dart';
 import 'package:sayfa_yonlendirme/widgets/animations/coin_animation_overlay.dart';
 
 class PlanningScreen extends StatefulWidget {
+  /*
+ * Planlama ekranı
+ * - Kullanıcının haftalık/aylık görev planlamasını gösterir
+ * - Takvim görünümü ile görev dağılımını visualize eder
+ * - Gelecek görevlerin planlanması ve düzenlenmesi için arayüz sağlar
+ */
   final int userId;
 
   const PlanningScreen({Key? key, required this.userId}) : super(key: key);
@@ -20,6 +22,15 @@ class PlanningScreen extends StatefulWidget {
 }
 
 class _PlanningScreenState extends State<PlanningScreen> {
+  /*
+ * PlanningScreen'in State sınıfı
+ * - Seçilen tarihe ait günlük planları yükler ve görüntüler
+ * - Tarih seçici ile farklı günlerin planlarına geçiş sağlar
+ * - Aktif zaman dilimindeki planları vurgular
+ * - Plan ekleme, düzenleme ve silme işlemlerini yönetir
+ * - Plan kartlarına tıklayarak görev detaylarını gösterir
+ * - Alt navigasyon ile diğer ekranlara geçiş sağlar
+ */
   List<Map<String, dynamic>> dailyPlans = [];
   bool isLoading = true;
   DateTime selectedDate = DateTime.now();
@@ -52,19 +63,13 @@ class _PlanningScreenState extends State<PlanningScreen> {
     try {
       final db = await DatabaseHelper.instance.database;
       final dateString = DateFormat('yyyy-MM-dd').format(selectedDate);
-      
-      print('🔍 Loading plans for date: $dateString'); // Debug
-      print('🔍 User ID: ${widget.userId}'); // Debug
-      
+            
       final result = await db.query(
-        'plans', // ❌ 'daily_plans' değil, 'plans' olmalı!
-        where: 'user_id = ? AND date = ?', // ❌ 'plan_date' değil, 'date' olmalı!
+        'plans',
+        where: 'user_id = ? AND date = ?',
         whereArgs: [widget.userId, dateString],
         orderBy: 'time_slot ASC',
       );
-
-      print('📊 Query result: $result'); // Debug
-      print('📊 Found ${result.length} plans'); // Debug
 
       if (mounted) {
         setState(() {
@@ -73,7 +78,7 @@ class _PlanningScreenState extends State<PlanningScreen> {
         });
       }
     } catch (e) {
-      print('❌ Plan yükleme hatası: $e');
+      print('Plan yükleme hatası: $e');
       if (mounted) {
         setState(() {
           isLoading = false;
@@ -82,11 +87,9 @@ class _PlanningScreenState extends State<PlanningScreen> {
     }
   }
 
-
   @override
   Widget build(BuildContext context) {
     return Scaffold(
-      // Status bar'ı koyu yap
       appBar: PreferredSize(
         preferredSize: Size.zero,
         child: AppBar(
@@ -115,7 +118,7 @@ class _PlanningScreenState extends State<PlanningScreen> {
             child: SafeArea(
               child: Column(
                 children: [
-                  // 🎯 Üst Bar - TODO screen ile aynı format
+                  // Üst Bar
                   Container(
                     decoration: BoxDecoration(
                       color: Color(0xFF1A1A1A),
@@ -130,7 +133,7 @@ class _PlanningScreenState extends State<PlanningScreen> {
                     padding: EdgeInsets.symmetric(horizontal: 20, vertical: 16),
                     child: Row(
                       children: [
-                        // 🚪 Logout icon
+                        // Logout icon
                         GestureDetector(
                           onTap: () => DialogUtils.showLogoutDialog(context),
                           child: Container(
@@ -147,14 +150,14 @@ class _PlanningScreenState extends State<PlanningScreen> {
                             ),
                           ),
                         ),
-                        // 📅 DAILY PLANNING başlığı
+                        // Daily Planning başlığı
                         Expanded(
                           child: Container(
                             margin: EdgeInsets.symmetric(horizontal: 16),
                             padding: EdgeInsets.symmetric(horizontal: 20, vertical: 8),
                             decoration: BoxDecoration(
                               gradient: LinearGradient(
-                                colors: [Color(0xFF06B6D4), Color(0xFF10B981)], // 🔵🟢 Cyan-Green gradient
+                                colors: [Color(0xFF06B6D4), Color(0xFF10B981)],
                                 begin: Alignment.centerLeft,
                                 end: Alignment.centerRight,
                               ),
@@ -217,20 +220,15 @@ class _PlanningScreenState extends State<PlanningScreen> {
                     ),
                   ),
 
-                  // 🎯 Ana İçerik - Ortada
+                  // Ana İçerik
                   Expanded(
                     child: SingleChildScrollView(
                       padding: EdgeInsets.symmetric(horizontal: 20),
                       child: Column(
                         children: [
                           SizedBox(height: 16),
-                          
-                          // 📅 Tarih Seçici
                           _buildDateSelector(),
-                          
                           SizedBox(height: 16),
-                          
-                          // 📋 Plan Listesi
                           isLoading
                               ? Container(
                                   height: 200,
@@ -241,8 +239,7 @@ class _PlanningScreenState extends State<PlanningScreen> {
                                   ),
                                 )
                               : _buildPlanList(),
-                          
-                          SizedBox(height: 100), // Alt navigation için boşluk
+                          SizedBox(height: 100),
                         ],
                       ),
                     ),
@@ -252,7 +249,7 @@ class _PlanningScreenState extends State<PlanningScreen> {
             ),
           ),
           
-          // 🆕 Sağ alt köşede + butonu - Alt bara bitişik
+          // Sağ alt köşede + butonu
           Positioned(
             right: 0,
             bottom: 90,
@@ -290,7 +287,7 @@ class _PlanningScreenState extends State<PlanningScreen> {
         ],
       ),
       
-      // 🆕 Alt Navigation Bar - 5 buton
+      // Alt Navigation Bar
       bottomNavigationBar: Container(
         height: 90,
         decoration: BoxDecoration(
@@ -319,24 +316,21 @@ class _PlanningScreenState extends State<PlanningScreen> {
               color: Color(0xFF06B6D4),
               onTap: () => NavigationUtils.goToDaily(context, widget.userId),
             ),
-
             _buildNavButton(
               icon: Icons.schedule,
               color: Color(0xFF10B981),
-              isActive: true, // Bu sayfa aktif
+              isActive: true,
               onTap: () {},
             ),
-
             _buildNavButton(
               icon: Icons.person_outline,
               color: Color(0xFFF59E0B),
               onTap: () => NavigationUtils.goToProfile(context, widget.userId),
             ),
-
             _buildNavButton(
               icon: Icons.trending_up,
               color: Color(0xFFEC4899),
-              onTap: () {},
+              onTap: () => NavigationUtils.goToStatistics(context, widget.userId),
             ),
           ],
         ),
@@ -429,7 +423,7 @@ class _PlanningScreenState extends State<PlanningScreen> {
   }
 
   Widget _buildPlanCard(Map<String, dynamic> plan) {
-    // 🎯 Aktif plan mı kontrol et
+    // Aktif plan mı kontrol edilir
     final bool isActivePlan = _isCurrentlyActive(plan);
     
     return GestureDetector(
@@ -442,12 +436,11 @@ class _PlanningScreenState extends State<PlanningScreen> {
           border: Border(
             left: BorderSide(
               color: isActivePlan 
-                  ? Color(0xFFE879F9)  // 💜 Aktif plan için pembe-mor
-                  : Color(0xFF06B6D4), // 🔵 Normal plan için mavi
+                  ? Color(0xFFE879F9)
+                  : Color(0xFF06B6D4),
               width: 4,
             ),
           ),
-          // 🎯 Aktif plan için glow efekti
           boxShadow: isActivePlan ? [
             BoxShadow(
               color: Color(0xFFE879F9).withOpacity(0.3),
@@ -467,7 +460,6 @@ class _PlanningScreenState extends State<PlanningScreen> {
                   Expanded(
                     child: Row(
                       children: [
-                        // 🎯 Aktif plan için pulse icon
                         if (isActivePlan) ...[
                           Container(
                             width: 8,
@@ -519,8 +511,8 @@ class _PlanningScreenState extends State<PlanningScreen> {
                 plan['time_slot'],
                 style: TextStyle(
                   color: isActivePlan 
-                      ? Color(0xFFE879F9)  // 💜 Aktif plan için pembe-mor
-                      : Color(0xFF06B6D4), // 🔵 Normal plan için mavi
+                      ? Color(0xFFE879F9)
+                      : Color(0xFF06B6D4),
                   fontSize: 12,
                   fontWeight: FontWeight.w500,
                 ),
@@ -532,7 +524,7 @@ class _PlanningScreenState extends State<PlanningScreen> {
     );
   }
 
-  // 🎯 Aktif plan kontrolü
+  // Aktif plan kontrolü
   bool _isCurrentlyActive(Map<String, dynamic> plan) {
     final now = DateTime.now();
     final currentTime = TimeOfDay.fromDateTime(now);
@@ -586,13 +578,12 @@ class _PlanningScreenState extends State<PlanningScreen> {
         userId: widget.userId,
         plan: plan,
         onTaskCompleted: () {
-          _loadUserCoins(); // Coin'leri yenile
+          _loadUserCoins();
         },
       ),
     );
   }
 
-  // Navigation Button  
   Widget _buildNavButton({
     required IconData icon,
     required Color color,
@@ -636,18 +627,17 @@ class _PlanningScreenState extends State<PlanningScreen> {
       context: context,
       builder: (context) => AddPlanDialog(
         userId: widget.userId,
-        selectedDate: selectedDate,        // 📅 Eklendi
-        onPlanAdded: _loadDailyPlans,     // 🔄 Eklendi
+        selectedDate: selectedDate,
+        onPlanAdded: _loadDailyPlans,
         existingPlan: plan,
       ),
     );
   }
 
-
   Future<void> _deletePlan(int planId) async {
     try {
       final db = await DatabaseHelper.instance.database;
-      await db.delete('plans', where: 'id = ?', whereArgs: [planId]); // ❌ 'daily_plans' değil!
+      await db.delete('plans', where: 'id = ?', whereArgs: [planId]);
       _loadDailyPlans();
       
       ScaffoldMessenger.of(context).showSnackBar(
@@ -658,14 +648,19 @@ class _PlanningScreenState extends State<PlanningScreen> {
         ),
       );
     } catch (e) {
-      print('❌ Plan silme hatası: $e');
+      print('Plan silme hatası: $e');
     }
   }
-
 }
 
-
 class AddPlanDialog extends StatefulWidget {
+  /*
+  * Plan ekleme/düzenleme dialog'u
+  * - Yeni günlük plan oluşturma veya mevcut planı düzenleme formu
+  * - Başlık, açıklama ve zaman dilimi girişi sağlar
+  * - Mevcut plan verileri ile dialog'u doldurabilir (düzenleme modu)
+  * - Plan kaydedildikten sonra ana sayfayı yeniler
+  */
   final int userId;
   final DateTime selectedDate;
   final VoidCallback onPlanAdded; 
@@ -684,6 +679,15 @@ class AddPlanDialog extends StatefulWidget {
 }
 
 class _AddPlanDialogState extends State<AddPlanDialog> {
+  /*
+  * AddPlanDialog'un State sınıfı
+  * - Plan başlığı, açıklama ve zaman aralığı girişi için form yönetimi
+  * - Mevcut plan düzenleme durumunda form alanlarını önceden doldurur
+  * - Başlangıç ve bitiş saati seçimi için time picker'lar sağlar
+  * - Saat çakışmalarını önlemek için otomatik düzeltme yapar
+  * - Plan süresini hesaplar ve görüntüler
+  * - Yeni plan ekleme veya mevcut plan güncelleme işlemlerini gerçekleştirir
+  */
   final _titleController = TextEditingController();
   final _descriptionController = TextEditingController();
   
@@ -695,9 +699,7 @@ class _AddPlanDialogState extends State<AddPlanDialog> {
     super.initState();
     if (widget.existingPlan != null) {
       _titleController.text = widget.existingPlan!['title'] ?? '';
-      _descriptionController.text = widget.existingPlan!['description'] ?? '';
-      
-      // Mevcut saat aralığını parse et
+      _descriptionController.text = widget.existingPlan!['description'] ?? '';        
       _parseExistingTimeSlot();
     }
   }
@@ -723,7 +725,7 @@ class _AddPlanDialogState extends State<AddPlanDialog> {
         }
       }
     } catch (e) {
-      print('❌ Mevcut saat parse hatası: $e');
+      print('Mevcut saat parse hatası: $e');
     }
   }
 
@@ -739,7 +741,7 @@ class _AddPlanDialogState extends State<AddPlanDialog> {
           mainAxisSize: MainAxisSize.min,
           crossAxisAlignment: CrossAxisAlignment.start,
           children: [
-            // 🎯 Başlık
+            // Başlık
             Text(
               widget.existingPlan != null ? 'Edit Plan' : 'Add New Plan',
               style: TextStyle(
@@ -750,7 +752,7 @@ class _AddPlanDialogState extends State<AddPlanDialog> {
             ),
             SizedBox(height: 24),
 
-            // 📝 Plan Title
+            // Plan Title
             _buildTextField(
               controller: _titleController,
               label: 'Plan Title',
@@ -758,7 +760,7 @@ class _AddPlanDialogState extends State<AddPlanDialog> {
             ),
             SizedBox(height: 16),
 
-            // 📝 Description
+            // Description
             _buildTextField(
               controller: _descriptionController,
               label: 'Description (Optional)',
@@ -767,11 +769,11 @@ class _AddPlanDialogState extends State<AddPlanDialog> {
             ),
             SizedBox(height: 24),
 
-            // ⏰ Time Selection
+            // Time Selection
             _buildTimeSelectionSection(),
             SizedBox(height: 32),
 
-            // 🎯 Buttons
+            // Buttons
             Row(
               children: [
                 Expanded(
@@ -825,7 +827,7 @@ class _AddPlanDialogState extends State<AddPlanDialog> {
         ),
         SizedBox(height: 16),
         
-        // 🎯 Time Selection Cards
+        // Time Selection Cards
         Row(
           children: [
             // Start Time
@@ -855,7 +857,7 @@ class _AddPlanDialogState extends State<AddPlanDialog> {
         
         SizedBox(height: 12),
         
-        // 🎯 Duration Display
+        // Duration Display
         Container(
           width: double.infinity,
           padding: EdgeInsets.symmetric(horizontal: 16, vertical: 12),
@@ -1019,7 +1021,7 @@ class _AddPlanDialogState extends State<AddPlanDialog> {
 
   bool _isTimeAfter(TimeOfDay time1, TimeOfDay time2) {
     return time1.hour > time2.hour || 
-           (time1.hour == time2.hour && time1.minute > time2.minute);
+          (time1.hour == time2.hour && time1.minute > time2.minute);
   }
 
   String _formatTime(TimeOfDay time) {
@@ -1063,15 +1065,13 @@ class _AddPlanDialogState extends State<AddPlanDialog> {
 
     try {
       final db = await DatabaseHelper.instance.database;
-      
       final timeSlot = '${_formatTime(_startTime)} - ${_formatTime(_endTime)}';
-      
       final planData = {
         'user_id': widget.userId,
         'title': _titleController.text.trim(),
         'description': _descriptionController.text.trim(),
         'time_slot': timeSlot,
-        'date': widget.selectedDate.toIso8601String().split('T')[0], // 📅 Seçilen tarih eklendi
+        'date': widget.selectedDate.toIso8601String().split('T')[0],
       };
 
       if (widget.existingPlan != null) {
@@ -1085,12 +1085,12 @@ class _AddPlanDialogState extends State<AddPlanDialog> {
         await db.insert('plans', planData);
       }
 
-      // 🔄 Parent'ı bilgilendir
+      // Parent'ı bilgilendir
       widget.onPlanAdded();
       
       Navigator.pop(context, true);
     } catch (e) {
-      print('❌ Plan kaydetme hatası: $e');
+      print('Plan kaydetme hatası: $e');
       ScaffoldMessenger.of(context).showSnackBar(
         SnackBar(
           content: Text('Error saving plan'),
@@ -1102,6 +1102,12 @@ class _AddPlanDialogState extends State<AddPlanDialog> {
 }
 
 class EditPlanDialog extends StatefulWidget {
+  /*
+    * Plan düzenleme dialog'u
+    * - Mevcut planın bilgilerini düzenleme formu sağlar
+    * - Plan başlığı, açıklama ve zaman dilimi güncellemesi yapılabilir
+    * - Güncelleme işlemi tamamlandıktan sonra ana sayfayı yeniler
+  */
   final Map<String, dynamic> plan;
   final VoidCallback onPlanUpdated;
 
@@ -1116,6 +1122,15 @@ class EditPlanDialog extends StatefulWidget {
 }
 
 class _EditPlanDialogState extends State<EditPlanDialog> {
+  /*
+    * EditPlanDialog'un State sınıfı
+    * - Mevcut plan verilerini form alanlarına yükler ve düzenleme imkanı sağlar
+    * - Plan başlığı, açıklama ve zaman dilimi güncelleme işlemlerini yönetir
+    * - Form validasyonu ile boş alan kontrolü yapar
+    * - Loading durumu gösterir ve güncelleme işlemini asenkron olarak gerçekleştirir
+    * - Başarılı/hatalı işlem sonuçlarını kullanıcıya bildirir
+    * - Güncelleme sonrası ana sayfayı yeniler ve dialog'u kapatır
+  */
   late TextEditingController _titleController;
   late TextEditingController _descriptionController;
   late TextEditingController _timeController;
@@ -1148,7 +1163,7 @@ class _EditPlanDialogState extends State<EditPlanDialog> {
           mainAxisSize: MainAxisSize.min,
           crossAxisAlignment: CrossAxisAlignment.start,
           children: [
-            // 🎯 Başlık
+            // Başlık
             Text(
               'Edit Plan',
               style: TextStyle(
@@ -1159,7 +1174,7 @@ class _EditPlanDialogState extends State<EditPlanDialog> {
             ),
             SizedBox(height: 20),
 
-            // ⏰ Zaman Aralığı
+            // Zaman Aralığı
             Text(
               'Time Slot',
               style: TextStyle(color: Colors.white, fontSize: 14, fontWeight: FontWeight.w500),
@@ -1182,7 +1197,7 @@ class _EditPlanDialogState extends State<EditPlanDialog> {
             ),
             SizedBox(height: 16),
 
-            // 📝 Başlık
+            // Başlık
             Text(
               'Title',
               style: TextStyle(color: Colors.white, fontSize: 14, fontWeight: FontWeight.w500),
@@ -1205,7 +1220,7 @@ class _EditPlanDialogState extends State<EditPlanDialog> {
             ),
             SizedBox(height: 16),
 
-            // 📄 Açıklama
+            // Açıklama
             Text(
               'Description (Optional)',
               style: TextStyle(color: Colors.white, fontSize: 14, fontWeight: FontWeight.w500),
@@ -1229,7 +1244,7 @@ class _EditPlanDialogState extends State<EditPlanDialog> {
             ),
             SizedBox(height: 24),
 
-            // 🎯 Butonlar
+            // Butonlar
             Row(
               children: [
                 Expanded(
@@ -1302,7 +1317,7 @@ class _EditPlanDialogState extends State<EditPlanDialog> {
       final db = await DatabaseHelper.instance.database;
 
       await db.update(
-        'plans', // ❌ 'daily_plans' değil!
+        'plans',
         {
           'time_slot': _timeController.text.trim(),
           'title': _titleController.text.trim(),
@@ -1324,7 +1339,7 @@ class _EditPlanDialogState extends State<EditPlanDialog> {
         ),
       );
     } catch (e) {
-      print('❌ Plan güncelleme hatası: $e');
+      print('Plan güncelleme hatası: $e');
       ScaffoldMessenger.of(context).showSnackBar(
         SnackBar(
           content: Text('Failed to update plan'),
@@ -1343,6 +1358,13 @@ class _EditPlanDialogState extends State<EditPlanDialog> {
 }
 
 class PlanTasksDialog extends StatefulWidget {
+  /*
+    * Plan görevleri dialog'u
+    * - Seçilen plana ait görevleri listeler ve yönetir
+    * - Görev tamamlama/geri alma işlemlerini sağlar
+    * - Yeni görev ekleme ve mevcut görevleri düzenleme imkanı sunar
+    * - Görev durumu değiştiğinde ana sayfayı bilgilendirir
+ */
   final int userId;
   final Map<String, dynamic> plan;
   final VoidCallback? onTaskCompleted;
@@ -1359,6 +1381,17 @@ class PlanTasksDialog extends StatefulWidget {
 }
 
 class _PlanTasksDialogState extends State<PlanTasksDialog> {
+  /*
+    * PlanTasksDialog'un State sınıfı
+    * - Seçilen plana atanmış görevleri ve mevcut görevleri yönetir
+    * - Görev tamamlama durumlarını takip eder ve veritabanında günceller
+    * - to-do tarzı checkbox'lı görev listesi sunar
+    * - Görev tamamlandığında coin ödülü animasyonu gösterir
+    * - Mevcut görevlerden plana yeni görev atama imkanı sağlar
+    * - Tamamlanan görevleri listenin altında, tamamlanmayanları üstte gösterir
+    * - İki ayrı dialog: ana görev listesi ve mevcut görevler seçimi
+    * - Görev durumu değişikliklerini ana sayfaya bildirir
+ */
   List<Map<String, dynamic>> availableTasks = [];
   List<Map<String, dynamic>> assignedTasks = [];
   List<int> completedTaskIds = [];
@@ -1371,7 +1404,7 @@ class _PlanTasksDialogState extends State<PlanTasksDialog> {
     _loadCompletedTasks();
   }
 
-  Future<void> _loadCompletedTasks() async {
+  Future<void> _loadCompletedTasks() async {    
     final db = await DatabaseHelper.instance.database;
     
     final results = await db.query(
@@ -1384,13 +1417,14 @@ class _PlanTasksDialogState extends State<PlanTasksDialog> {
     setState(() {
       completedTaskIds = results.map((e) => e['id'] as int).toList();
     });
+    print('Planning Completed task IDs: $completedTaskIds');
   }
 
   Future<void> _loadTasks() async {
     try {
       final db = await DatabaseHelper.instance.database;
       
-      // 🎯 Kullanıcının aktif task'larını al
+      // Kullanıcının aktif task'larını al
       final allTasks = await db.query(
         'tasks',
         where: 'user_id = ? AND is_active = 1',
@@ -1398,7 +1432,7 @@ class _PlanTasksDialogState extends State<PlanTasksDialog> {
         orderBy: 'created_at DESC',
       );
 
-      // 🎯 Bu plana atanmış task'ları al
+      // Bu plana atanmış task'ları al
       final assignedTaskIds = await db.rawQuery('''
         SELECT t.*, pt.id as plan_task_id
         FROM tasks t
@@ -1407,10 +1441,10 @@ class _PlanTasksDialogState extends State<PlanTasksDialog> {
         ORDER BY t.created_at DESC
       ''', [widget.plan['id']]);
 
-      // 🎯 Atanmış task ID'lerini topla
+      // Atanmış task ID'lerini topla
       final assignedIds = assignedTaskIds.map((t) => t['id']).toSet();
 
-      // 🎯 Henüz atanmamış task'ları filtrele (sadece tamamlanmamış olanlar)
+      // Henüz atanmamış task'ları filtrele (sadece tamamlanmamış olanlar)
       final available = allTasks.where((task) => 
         !assignedIds.contains(task['id']) && 
         !completedTaskIds.contains(task['id'])
@@ -1424,7 +1458,7 @@ class _PlanTasksDialogState extends State<PlanTasksDialog> {
         });
       }
     } catch (e) {
-      print('❌ Task yükleme hatası: $e');
+      print('Task yükleme hatası: $e');
       if (mounted) {
         setState(() {
           isLoading = false;
@@ -1434,69 +1468,67 @@ class _PlanTasksDialogState extends State<PlanTasksDialog> {
   }
 
   Future<void> _toggleTask(int taskId, bool isCompleted) async {
-    final db = await DatabaseHelper.instance.database;
+    print('Plan Task tıklandı: ID=$taskId, yeni durum=$isCompleted');
     
-    if (isCompleted) {
-      await db.update(
-        'tasks',
-        {'is_completed': 1},
-        where: 'id = ?',
-        whereArgs: [taskId],
+    try {
+      // DatabaseHelper'daki toggleTaskCompletion fonksiyonunu kullan
+      final result = await DatabaseHelper.instance.toggleTaskCompletion(
+        taskId, 
+        widget.userId, 
+        isCompleted
       );
       
-      await db.insert('task_completion', {
-        'task_id': taskId,
-      });
+      print('DB sonucu: $result');
       
-      final task = await db.query('tasks', where: 'id = ?', whereArgs: [taskId]);
-      if (task.isNotEmpty) {
-        int coinReward = task.first['coin_reward'] as int;
-        
-        // Kullanıcının mevcut coinlerini al
-        final userResult = await db.query('users', where: 'id = ?', whereArgs: [widget.userId]);
-        if (userResult.isNotEmpty) {
-          int currentCoins = userResult.first['coins'] as int;
-          
-          await db.update(
-            'users',
-            {'coins': currentCoins + coinReward},
-            where: 'id = ?',
-            whereArgs: [widget.userId],
-          );
-          
-          // 🎯 Coin animasyonunu göster
+      if (result['success'] == true) {        
+        // Coin ödülü animasyonu
+        if (result['coinReward'] > 0) {
+          print('Coin ödülü verildi: +${result['coinReward']}');
           if (mounted) {
-            CoinAnimationOverlay.showCoinDrop(context, coinReward);
+            CoinAnimationOverlay.showCoinDrop(context, result['coinReward']);
           }
-          
-          // 🎯 Parent'ı bilgilendir
-          if (widget.onTaskCompleted != null) {
-            widget.onTaskCompleted!();
-          }
-          
-          print('💰 Coin ödülü verildi: +$coinReward');
         }
+        
+        // Parent'ı bilgilendir (coin güncelleme için)
+        if (widget.onTaskCompleted != null) {
+          widget.onTaskCompleted!();
+        }
+        
+        // Achievment kontrolü
+        if (isCompleted) {
+          await DatabaseHelper.instance.checkAndUnlockAchievements(widget.userId);
+        }
+
+        // Local state'i güncelle
+        setState(() {
+          if (isCompleted) {
+            completedTaskIds.add(taskId);
+          } else {
+            completedTaskIds.remove(taskId);
+          }
+        });
+        
+        print('Planning task toggle tamamlandı');
+      } else {
+        print('Task toggle başarısız: ${result['error']}');
       }
-    } else {
-      await db.delete(
-        'task_completion',
-        where: 'task_id = ? AND DATE(completed_at) = ?',
-        whereArgs: [taskId, DateTime.now().toIso8601String().split('T')[0]],
-      );
+    } catch (e) {
+      print('Planning task toggle hatası: $e');
       
-      await db.update(
-        'tasks',
-        {'is_completed': 0},
-        where: 'id = ?',
-        whereArgs: [taskId],
-      );
+      if (mounted) {
+        ScaffoldMessenger.of(context).showSnackBar(
+          SnackBar(
+            content: Text('Error updating task'),
+            backgroundColor: Colors.red,
+            behavior: SnackBarBehavior.floating,
+          ),
+        );
+      }
     }
-    
-    _loadCompletedTasks();
-    _loadTasks();
   }
 
-  // 🎯 Atanmış task'ları sırala: tamamlanmayanlar önce
+
+  // Atanmış task'ları sırala: tamamlanmayanlar önce
   List<Map<String, dynamic>> _sortAssignedTasks() {
     final notCompleted = assignedTasks.where((task) => 
       !completedTaskIds.contains(task['id'])
@@ -1523,7 +1555,7 @@ class _PlanTasksDialogState extends State<PlanTasksDialog> {
         child: Column(
           crossAxisAlignment: CrossAxisAlignment.start,
           children: [
-            // 🎯 Başlık
+            // Başlık
             Row(
               children: [
                 Expanded(
@@ -1557,7 +1589,7 @@ class _PlanTasksDialogState extends State<PlanTasksDialog> {
             ),
             SizedBox(height: 20),
 
-            // 🎯 Atanmış Task'lar Listesi
+            // Atanmış Task'lar Listesi
             Expanded(
               child: isLoading
                   ? Center(child: CircularProgressIndicator(color: Color(0xFF06B6D4)))
@@ -1585,7 +1617,7 @@ class _PlanTasksDialogState extends State<PlanTasksDialog> {
                             children: [
                               SizedBox(height: 8),
                               
-                              // 🎯 Atanmış task'lar - TODO tarzı
+                              // Atanmış tasklar
                               ...sortedAssignedTasks.map((task) {
                                 final isCompleted = completedTaskIds.contains(task['id']);
                                 return _buildTodoStyleTask(task, isCompleted);
@@ -1597,7 +1629,7 @@ class _PlanTasksDialogState extends State<PlanTasksDialog> {
                         ),
             ),
 
-            // 🎯 Add Task Button - En altta
+            // Add Task Button
             Container(
               width: double.infinity,
               child: ElevatedButton.icon(
@@ -1626,13 +1658,13 @@ class _PlanTasksDialogState extends State<PlanTasksDialog> {
     );
   }
 
-  // 🎯 TODO tarzı task item - tıklanabilir checkbox ile
+  // Task item
   Widget _buildTodoStyleTask(Map<String, dynamic> task, bool isCompleted) {
     return Container(
       margin: EdgeInsets.only(bottom: 16),
       child: Row(
         children: [
-          // ✅ Checkbox - TODO screen'deki gibi
+          // Checkbox
           GestureDetector(
             onTap: () => _toggleTask(task['id'], !isCompleted),
             child: Container(
@@ -1653,7 +1685,7 @@ class _PlanTasksDialogState extends State<PlanTasksDialog> {
           ),
           SizedBox(width: 16),
           
-          // Task container - TODO screen'deki gibi
+          // Task container
           Expanded(
             child: Container(
               padding: EdgeInsets.symmetric(horizontal: 24, vertical: 18),
@@ -1688,7 +1720,7 @@ class _PlanTasksDialogState extends State<PlanTasksDialog> {
     );
   }
 
-  // 🎯 Available Tasks Dialog - Ayrı popup
+  // Available Tasks Dialog
   void _showAvailableTasksDialog() {
     showDialog(
       context: context,
@@ -1723,7 +1755,7 @@ class _PlanTasksDialogState extends State<PlanTasksDialog> {
               ),
               SizedBox(height: 16),
 
-              // 🎯 Available Tasks List
+              // Available Tasks List
               Expanded(
                 child: availableTasks.isEmpty
                     ? Center(
@@ -1794,7 +1826,7 @@ class _PlanTasksDialogState extends State<PlanTasksDialog> {
         trailing: ElevatedButton(
           onPressed: () {
             _assignTaskToPlan(task['id']);
-            Navigator.pop(context); // Available tasks dialog'unu kapat
+            Navigator.pop(context);
           },
           style: ElevatedButton.styleFrom(
             backgroundColor: Color(0xFF10B981),

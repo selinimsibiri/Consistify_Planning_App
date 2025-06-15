@@ -8,7 +8,6 @@ import './db/database_helper.dart';
 void main() async {
   WidgetsFlutterBinding.ensureInitialized(); // Flutter uygulaması başlatılmadan önce asenkron işlemler yapılması gerekir
   await checkDatabase(); // Veritabanını kontrol et
-  DatabaseHelper.instance.printTables(); // Veritabanındaki tüm tablolara bak
   runApp(MyApp()); // Uygulamayı başlat
 }
 

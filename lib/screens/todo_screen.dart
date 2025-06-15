@@ -1,15 +1,17 @@
 import 'package:flutter/material.dart';
 import 'package:flutter/services.dart';
 import 'package:sayfa_yonlendirme/db/database_helper.dart';
-import 'package:sayfa_yonlendirme/screens/daily_screen.dart';
-import 'package:sayfa_yonlendirme/screens/planning_screen.dart';
-import 'package:sayfa_yonlendirme/screens/profile_screen.dart';
-import 'package:sayfa_yonlendirme/utils/app_routes.dart';
 import 'package:sayfa_yonlendirme/utils/dialog_utils.dart';
 import 'package:sayfa_yonlendirme/utils/navigation_utils.dart';
 import 'package:sayfa_yonlendirme/widgets/animations/coin_animation_overlay.dart';
 
 class TodoScreen extends StatefulWidget {
+  /*
+ * Todo görevleri ana ekranı
+ * - Kullanıcının todo listesini görüntüler
+ * - Todo ekleme, düzenleme, silme ve tamamlama işlemlerini yönetir
+ * - Coin sistemi ile entegre çalışır
+ */
   final int userId;
 
   const TodoScreen({Key? key, required this.userId}) : super(key: key);
@@ -19,6 +21,15 @@ class TodoScreen extends StatefulWidget {
 }
 
 class _TodoScreenState extends State<TodoScreen> {
+  /*
+ * Todo ekranının State sınıfı
+ * - One-time ve daily görevleri yükler ve görüntüler
+ * - Görev tamamlama/geri alma işlemlerini yönetir
+ * - Coin ödüllerini ve başarıları gösterir
+ * - Alt navigasyon barı ile diğer ekranlara geçiş sağlar
+ * - Floating action button ile yeni görev ekleme
+ * - Tamamlanan görevleri listenin altına taşır
+ */
   List<Map<String, dynamic>> oneTimeTasks = [];
   List<Map<String, dynamic>> dailyTasks = [];
   List<int> completedTaskIds = [];
@@ -62,9 +73,10 @@ class _TodoScreenState extends State<TodoScreen> {
   }
 
   Future<void> _loadCompletedTasks() async {
+    print('🔄 Completed tasks yükleniyor...');
     final db = await DatabaseHelper.instance.database;
-    final today = DateTime.now().toIso8601String().split('T')[0];
     
+    // 🎯 Bugün tamamlanan tüm taskları al (tarih filtresiz)
     final results = await db.query(
       'tasks',
       columns: ['id'],
@@ -75,6 +87,8 @@ class _TodoScreenState extends State<TodoScreen> {
     setState(() {
       completedTaskIds = results.map((e) => e['id'] as int).toList();
     });
+    
+    print('✅ Completed task IDs: $completedTaskIds');
   }
 
   Future<void> _loadUserCoins() async {
@@ -94,55 +108,67 @@ class _TodoScreenState extends State<TodoScreen> {
   }
 
   Future<void> _toggleTask(int taskId, bool isCompleted) async {
-    final db = await DatabaseHelper.instance.database;
+    print('🔄 Toggle başladı: taskId=$taskId, isCompleted=$isCompleted');
     
-    if (isCompleted) {
-      await db.update(
-        'tasks',
-        {'is_completed': 1},
-        where: 'id = ?',
-        whereArgs: [taskId],
+    try {
+      final result = await DatabaseHelper.instance.toggleTaskCompletion(
+        taskId, 
+        widget.userId, 
+        isCompleted
       );
-      
-      await db.insert('task_completion', {
-        'task_id': taskId,
-      });
-      
-      final task = await db.query('tasks', where: 'id = ?', whereArgs: [taskId]);
-      if (task.isNotEmpty) {
-        int coinReward = task.first['coin_reward'] as int;
-        await db.update(
-          'users',
-          {'coins': userCoins + coinReward},
-          where: 'id = ?',
-          whereArgs: [widget.userId],
-        );
-        
+            
+      if (result['success']) {
+    
+        // ÖNCE UI GÜNCELLENİR
         setState(() {
-          userCoins += coinReward;
+          if (isCompleted) {
+            if (!completedTaskIds.contains(taskId)) {
+              completedTaskIds.add(taskId);
+            }
+          } else {
+            completedTaskIds.remove(taskId);
+          }
         });
+        
+        // Coin işlemleri
+        int coinReward = result['coinReward'] as int;
+        if (coinReward != 0) {
+          setState(() {
+            userCoins = result['newCoinTotal'] as int;
+          });
+          
+          if (coinReward > 0) {
+            CoinAnimationOverlay.showCoinDrop(context, coinReward);
+            print('Coin ödülü verildi: +$coinReward');
+          }
+        }
 
-        // Coin animasyonunu göster
-        CoinAnimationOverlay.showCoinDrop(context, coinReward);
-        print('💰 Coin ödülü verildi: +$coinReward');
+        // ACHIEVEMENT KONTROLÜ EKLENDİ
+        if (isCompleted) {
+          await DatabaseHelper.instance.checkAndUnlockAchievements(widget.userId);
+        }
+        
+        // Başarılar
+        List<String> achievements = result['achievements'] as List<String>;
+        if (achievements.isNotEmpty) {
+          for (String achievement in achievements) {
+            _showAchievementDialog(achievement);
+          }
+        }
+        
+      } else {
+        print('DB işlemi başarısız: ${result['error']}');
       }
-    } else {
-      await db.delete(
-        'task_completion',
-        where: 'task_id = ? AND DATE(completed_at) = ?',
-        whereArgs: [taskId, DateTime.now().toIso8601String().split('T')[0]],
-      );
       
-      await db.update(
-        'tasks',
-        {'is_completed': 0},
-        where: 'id = ?',
-        whereArgs: [taskId],
-      );
+    } catch (e) {
+      print('Toggle işlemi hatası: $e');
     }
     
-    _loadCompletedTasks();
-    _loadTasks();
+    // SONRA DB'DEN YENİDEN YÜK ALINIR (güvenlik için)
+    await _loadCompletedTasks();
+    await _loadTasks();
+    
+    print('Toggle tamamlandı - Completed IDs: $completedTaskIds');
   }
 
   void _showAddTaskDialog() {
@@ -431,7 +457,7 @@ class _TodoScreenState extends State<TodoScreen> {
             _buildNavButton(
               icon: Icons.trending_up,
               color: Color(0xFFEC4899),
-              onTap: () {},
+              onTap: () => NavigationUtils.goToStatistics(context, widget.userId),
             ),
           ],
         ),
@@ -441,12 +467,17 @@ class _TodoScreenState extends State<TodoScreen> {
 
   // Task Item
   Widget _buildTaskItem(int taskId, String title, bool isCompleted, bool isDaily) {
+    print('🎨 Task render: ID=$taskId, title=$title, completed=$isCompleted');
+
     return Container(
       margin: EdgeInsets.only(bottom: 16),
       child: Row(
         children: [
           GestureDetector(
-            onTap: () => _toggleTask(taskId, !isCompleted),
+            onTap: () {
+              print('👆 Task tıklandı: ID=$taskId, mevcut durum=$isCompleted');
+              _toggleTask(taskId, !isCompleted);
+            },
             child: Container(
               width: 28,
               height: 28,
@@ -527,9 +558,81 @@ class _TodoScreenState extends State<TodoScreen> {
       ),
     );
   }
+
+  // 🏆 Başarı dialog'u göster
+  void _showAchievementDialog(String achievement) {
+    showDialog(
+      context: context,
+      builder: (BuildContext context) {
+        return AlertDialog(
+          backgroundColor: Color(0xFF2D2D2D),
+          shape: RoundedRectangleBorder(
+            borderRadius: BorderRadius.circular(20),
+          ),
+          title: Row(
+            children: [
+              Text('🎉', style: TextStyle(fontSize: 24)),
+              SizedBox(width: 8),
+              Text(
+                'Yeni Başarı!',
+                style: TextStyle(
+                  color: Colors.white,
+                  fontSize: 18,
+                  fontWeight: FontWeight.bold,
+                ),
+              ),
+            ],
+          ),
+          content: Container(
+            padding: EdgeInsets.symmetric(vertical: 12),
+            child: Text(
+              achievement,
+              style: TextStyle(
+                color: Colors.white70,
+                fontSize: 16,
+                height: 1.4,
+              ),
+              textAlign: TextAlign.center,
+            ),
+          ),
+          actions: [
+            Container(
+              width: double.infinity,
+              child: ElevatedButton(
+                onPressed: () => Navigator.of(context).pop(),
+                style: ElevatedButton.styleFrom(
+                  backgroundColor: Color(0xFF8B5CF6),
+                  foregroundColor: Colors.white,
+                  padding: EdgeInsets.symmetric(vertical: 12),
+                  shape: RoundedRectangleBorder(
+                    borderRadius: BorderRadius.circular(12),
+                  ),
+                ),
+                child: Text(
+                  'Harika! 🎊',
+                  style: TextStyle(
+                    fontSize: 16,
+                    fontWeight: FontWeight.bold,
+                  ),
+                ),
+              ),
+            ),
+          ],
+        );
+      },
+    );
+  }
+
 }
 
 class AddTaskDialog extends StatefulWidget {
+  /*
+ * Yeni görev ekleme dialog'u
+ * - One-time görev oluşturma formu gösterir
+ * - Başlık girişi ve coin ödülü seçimi sağlar
+ * - Yeni görevi veritabanına kaydeder
+ * - İşlem tamamlandığında ana sayfayı yeniler
+ */
   final int userId;
   final VoidCallback onTaskAdded;
 
@@ -544,9 +647,16 @@ class AddTaskDialog extends StatefulWidget {
 }
 
 class _AddTaskDialogState extends State<AddTaskDialog> {
+  /*
+ * AddTaskDialog'un State sınıfı
+ * - Görev başlığı ve açıklama girişi için text controller'ları yönetir
+ * - Coin ödülü seçimi için slider kontrolü sağlar
+ * - Form validasyonu ve görev kaydetme işlemlerini gerçekleştirir
+ * - Başarılı kayıt sonrası dialog'u kapatır ve ana sayfayı yeniler
+ */
   final _titleController = TextEditingController();
   final _descriptionController = TextEditingController();
-  double _coinReward = 3.0; // 🆕 Default 3 coins
+  double _coinReward = 3.0;
 
   @override
   Widget build(BuildContext context) {
@@ -569,9 +679,9 @@ class _AddTaskDialogState extends State<AddTaskDialog> {
         child: Column(
           mainAxisSize: MainAxisSize.min,
           children: [
-            // 🎯 Title Input - Küçültülmüş boyut
+            // Title Input
             Container(
-              padding: EdgeInsets.symmetric(horizontal: 16, vertical: 12), // 🔧 Padding küçültüldü
+              padding: EdgeInsets.symmetric(horizontal: 16, vertical: 12),
               decoration: BoxDecoration(
                 color: Color(0xFFF8F9FA),
                 borderRadius: BorderRadius.circular(16),
@@ -596,17 +706,17 @@ class _AddTaskDialogState extends State<AddTaskDialog> {
                   ),
                   border: InputBorder.none,
                   contentPadding: EdgeInsets.zero,
-                  isDense: true, // 🔧 Daha kompakt
+                  isDense: true,
                 ),
               ),
             ),
             
             SizedBox(height: 20),
             
-            // 🎯 Description Input - Biraz büyütülmüş
+            // Description Input
             Container(
-              height: 120, // 🔧 100'den 120'ye çıkarıldı
-              padding: EdgeInsets.all(16), // 🔧 Padding küçültüldü
+              height: 120,
+              padding: EdgeInsets.all(16),
               decoration: BoxDecoration(
                 color: Color(0xFFF8F9FA),
                 borderRadius: BorderRadius.circular(16),
@@ -637,7 +747,7 @@ class _AddTaskDialogState extends State<AddTaskDialog> {
             
             SizedBox(height: 24),
             
-            // 🆕 COIN SELECTION SECTION
+            // Coin selection
             Container(
               padding: EdgeInsets.all(20),
               decoration: BoxDecoration(
@@ -703,7 +813,7 @@ class _AddTaskDialogState extends State<AddTaskDialog> {
                   
                   SizedBox(height: 16),
                   
-                  // 🎯 Slider - Aesthetic design
+                  // Slider
                   SliderTheme(
                     data: SliderTheme.of(context).copyWith(
                       trackHeight: 6,
@@ -771,11 +881,11 @@ class _AddTaskDialogState extends State<AddTaskDialog> {
             
             SizedBox(height: 28),
             
-            // 🎯 Add Task Button - Ortalanmış ve tema uyumlu
+            // Add Task Button
             GestureDetector(
               onTap: _addTask,
               child: Container(
-                width: double.infinity, // 🔧 Tam genişlik
+                width: double.infinity,
                 padding: EdgeInsets.symmetric(vertical: 16),
                 decoration: BoxDecoration(
                   gradient: LinearGradient(
@@ -828,29 +938,17 @@ class _AddTaskDialogState extends State<AddTaskDialog> {
 
     final db = await DatabaseHelper.instance.database;
     
-    // 🆕 Get coin reward value from slider
     await db.insert('tasks', {
       'user_id': widget.userId,
       'title': _titleController.text.trim(),
       'description': _descriptionController.text.trim(),
       'is_active': '1',
       'type': 'one_time',
-      'coin_reward': _coinReward.round(), // 🎯 Slider value
+      'coin_reward': _coinReward.round(),
     });
 
     widget.onTaskAdded();
     Navigator.pop(context);
-    
-    // ScaffoldMessenger.of(context).showSnackBar(
-    //   SnackBar(
-    //     content: Text('Task added successfully! (+${_coinReward.round()} 🪙)'),
-    //     backgroundColor: Color(0xFF8B5CF6),
-    //     behavior: SnackBarBehavior.floating,
-    //     shape: RoundedRectangleBorder(
-    //       borderRadius: BorderRadius.circular(12),
-    //     ),
-    //   ),
-    // );
   }
 
   @override
