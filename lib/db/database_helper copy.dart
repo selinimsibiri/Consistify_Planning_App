@@ -745,7 +745,6 @@ class DatabaseHelper {
             }
           }
           
-          
         } else {
           // task tamamlanması geri alındı
           String today = DateTime.now().toIso8601String().split('T')[0];
@@ -1045,134 +1044,58 @@ class DatabaseHelper {
   }
 
   Future<Map<String, dynamic>> getWeeklyComparison(int userId) async {
-    try {
-      // Haftalık karşılaştırma
-      final db = await database;
-      final now = DateTime.now();
-      final thisWeekStart = now.subtract(Duration(days: now.weekday - 1));
-      final lastWeekStart = thisWeekStart.subtract(Duration(days: 7));
-      
-      final thisWeekEnd = thisWeekStart.add(Duration(days: 6));
-      final lastWeekEnd = lastWeekStart.add(Duration(days: 6));
-      
-      // Bu hafta
-      final thisWeek = await db.rawQuery('''
-        SELECT 
-          COALESCE(SUM(total_tasks), 0) as total_tasks,
-          COALESCE(SUM(completed_tasks), 0) as completed_tasks,
-          COALESCE(SUM(coins_earned), 0) as coins_earned,
-          COALESCE(AVG(completion_rate), 0) as avg_completion_rate,
-          COALESCE(MAX(streak_count), 0) as max_streak
-        FROM user_stats 
-        WHERE user_id = ? AND date BETWEEN ? AND ?
-      ''', [userId, thisWeekStart.toIso8601String().split('T')[0], thisWeekEnd.toIso8601String().split('T')[0]]);
-      
-      // Geçen hafta
-      final lastWeek = await db.rawQuery('''
-        SELECT 
-          COALESCE(SUM(total_tasks), 0) as total_tasks,
-          COALESCE(SUM(completed_tasks), 0) as completed_tasks,
-          COALESCE(SUM(coins_earned), 0) as coins_earned,
-          COALESCE(AVG(completion_rate), 0) as avg_completion_rate,
-          COALESCE(MAX(streak_count), 0) as max_streak
-        FROM user_stats 
-        WHERE user_id = ? AND date BETWEEN ? AND ?
-      ''', [userId, lastWeekStart.toIso8601String().split('T')[0], lastWeekEnd.toIso8601String().split('T')[0]]);
-      
-      final thisWeekData = thisWeek.first;
-      final lastWeekData = lastWeek.first;
-      
-      return {
-        'this_week': {
-          'total_tasks': _safeInt(thisWeekData['total_tasks']),
-          'completed_tasks': _safeInt(thisWeekData['completed_tasks']),
-          'coins_earned': _safeInt(thisWeekData['coins_earned']),
-          'avg_completion_rate': _safeDouble(thisWeekData['avg_completion_rate']),
-          'max_streak': _safeInt(thisWeekData['max_streak']),
-        },
-        'last_week': {
-          'total_tasks': _safeInt(lastWeekData['total_tasks']),
-          'completed_tasks': _safeInt(lastWeekData['completed_tasks']),
-          'coins_earned': _safeInt(lastWeekData['coins_earned']),
-          'avg_completion_rate': _safeDouble(lastWeekData['avg_completion_rate']),
-          'max_streak': _safeInt(lastWeekData['max_streak']),
-        },
-        'improvements': _calculateImprovements(thisWeekData, lastWeekData),
-      };
-    } catch (e) {
-      print('❌ getWeeklyComparison hatası: $e');
-      return {
-        'this_week': {
-          'total_tasks': 0,
-          'completed_tasks': 0,
-          'coins_earned': 0,
-          'avg_completion_rate': 0.0,
-          'max_streak': 0,
-        },
-        'last_week': {
-          'total_tasks': 0,
-          'completed_tasks': 0,
-          'coins_earned': 0,
-          'avg_completion_rate': 0.0,
-          'max_streak': 0,
-        },
-        'improvements': {
-          'task_change': 0,
-          'completion_change': 0,
-          'coin_change': 0,
-          'rate_change': 0.0,
-          'is_improving': false,
-        },
-      };
-    }
-  }
-
-  int _safeInt(dynamic value) {
-    if (value == null) return 0;
-    if (value is int) return value;
-    if (value is double) return value.round();
-    if (value is String) {
-      return int.tryParse(value) ?? 0;
-    }
-    return 0;
-  }
-
-  double _safeDouble(dynamic value) {
-    if (value == null) return 0.0;
-    if (value is double) return value;
-    if (value is int) return value.toDouble();
-    if (value is String) {
-      return double.tryParse(value) ?? 0.0;
-    }
-    return 0.0;
-  }
-
-  Map<String, dynamic> _calculateImprovements(Map<String, dynamic> thisWeek, Map<String, dynamic> lastWeek) {
-    final thisWeekTasks = _safeInt(thisWeek['total_tasks']);
-    final lastWeekTasks = _safeInt(lastWeek['total_tasks']);
+    // Haftalık karşılaştırma
+    final db = await database;
+    final now = DateTime.now();
+    final thisWeekStart = now.subtract(Duration(days: now.weekday - 1));
+    final lastWeekStart = thisWeekStart.subtract(Duration(days: 7));
     
-    final thisWeekCompleted = _safeInt(thisWeek['completed_tasks']);
-    final lastWeekCompleted = _safeInt(lastWeek['completed_tasks']);
+    final thisWeekEnd = thisWeekStart.add(Duration(days: 6));
+    final lastWeekEnd = lastWeekStart.add(Duration(days: 6));
     
-    final thisWeekCoins = _safeInt(thisWeek['coins_earned']);
-    final lastWeekCoins = _safeInt(lastWeek['coins_earned']);
+    // Bu hafta
+    final thisWeek = await db.rawQuery('''
+      SELECT 
+        COALESCE(SUM(total_tasks), 0) as total_tasks,
+        COALESCE(SUM(completed_tasks), 0) as completed_tasks,
+        COALESCE(SUM(coins_earned), 0) as coins_earned,
+        COALESCE(AVG(completion_rate), 0) as avg_completion_rate,
+        COALESCE(MAX(streak_count), 0) as max_streak
+      FROM user_stats 
+      WHERE user_id = ? AND date BETWEEN ? AND ?
+    ''', [userId, thisWeekStart.toIso8601String().split('T')[0], thisWeekEnd.toIso8601String().split('T')[0]]);
     
-    final thisWeekRate = _safeDouble(thisWeek['avg_completion_rate']);
-    final lastWeekRate = _safeDouble(lastWeek['avg_completion_rate']);
+    // Geçen hafta
+    final lastWeek = await db.rawQuery('''
+      SELECT 
+        COALESCE(SUM(total_tasks), 0) as total_tasks,
+        COALESCE(SUM(completed_tasks), 0) as completed_tasks,
+        COALESCE(SUM(coins_earned), 0) as coins_earned,
+        COALESCE(AVG(completion_rate), 0) as avg_completion_rate,
+        COALESCE(MAX(streak_count), 0) as max_streak
+      FROM user_stats 
+      WHERE user_id = ? AND date BETWEEN ? AND ?
+    ''', [userId, lastWeekStart.toIso8601String().split('T')[0], lastWeekEnd.toIso8601String().split('T')[0]]);
     
-    final taskChange = thisWeekTasks - lastWeekTasks;
-    final completionChange = thisWeekCompleted - lastWeekCompleted;
-    final coinChange = thisWeekCoins - lastWeekCoins;
-    final rateChange = thisWeekRate - lastWeekRate; 
-    
-    final isImproving = (completionChange >= 0 && coinChange >= 0 && rateChange >= 0);
+    final thisWeekData = thisWeek.first;
+    final lastWeekData = lastWeek.first;
     
     return {
-      'task_change': taskChange,
-      'completion_change': completionChange,
-      'coin_change': coinChange,
-      'rate_change': rateChange,
-      'is_improving': isImproving,
+      'this_week': {
+        'total_tasks': thisWeekData['total_tasks'] as int,
+        'completed_tasks': thisWeekData['completed_tasks'] as int,
+        'coins_earned': thisWeekData['coins_earned'] as int,
+        'avg_completion_rate': (thisWeekData['avg_completion_rate'] as num).toDouble(),
+        'max_streak': thisWeekData['max_streak'] as int,
+      },
+      'last_week': {
+        'total_tasks': lastWeekData['total_tasks'] as int,
+        'completed_tasks': lastWeekData['completed_tasks'] as int,
+        'coins_earned': lastWeekData['coins_earned'] as int,
+        'avg_completion_rate': (lastWeekData['avg_completion_rate'] as num).toDouble(),
+        'max_streak': lastWeekData['max_streak'] as int,
+      },
+      'improvements': _calculateImprovements(thisWeekData, lastWeekData),
     };
   }
 
@@ -1300,6 +1223,19 @@ class DatabaseHelper {
     if (completionRate >= 60) return '📈 Gelişen Kahraman';
     if (completionRate >= 50) return '🌱 Büyüyen Tohum';
     return '💪 Potansiyel Dolu';
+  }
+
+  Map<String, dynamic> _calculateImprovements(Map<String, dynamic> thisWeek, Map<String, dynamic> lastWeek) {
+    final taskImprovement = (thisWeek['completed_tasks'] as int) - (lastWeek['completed_tasks'] as int);
+    final coinImprovement = (thisWeek['coins_earned'] as int) - (lastWeek['coins_earned'] as int);
+    final rateImprovement = (thisWeek['avg_completion_rate'] as double) - (lastWeek['avg_completion_rate'] as double);
+    
+    return {
+      'task_change': taskImprovement,
+      'coin_change': coinImprovement,
+      'rate_change': rateImprovement,
+      'is_improving': taskImprovement >= 0 && rateImprovement >= 0,
+    };
   }
 
   String getMotivationalQuote(DateTime date, double performance) {

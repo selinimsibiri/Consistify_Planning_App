@@ -1,14 +1,11 @@
 import 'package:flutter/material.dart';
 import 'package:flutter/services.dart';
 import 'package:sayfa_yonlendirme/db/database_helper.dart';
-import 'package:sayfa_yonlendirme/screens/planning_screen.dart';
-import 'package:sayfa_yonlendirme/screens/todo_screen.dart';
-import 'package:sayfa_yonlendirme/screens/profile_screen.dart';
-import 'package:sayfa_yonlendirme/utils/app_routes.dart';
 import 'package:sayfa_yonlendirme/utils/dialog_utils.dart';
 import 'package:sayfa_yonlendirme/utils/navigation_utils.dart';
 
 class DailyScreen extends StatefulWidget {
+  // Daily sayfasının temel yapısını tanımlayan sınıf - asıl içerik State sınıfında yazılacak
   final int userId;
 
   const DailyScreen({Key? key, required this.userId}) : super(key: key);
@@ -18,6 +15,14 @@ class DailyScreen extends StatefulWidget {
 }
 
 class _DailyScreenState extends State<DailyScreen> {
+  /*
+    * Daily sayfasının ana State sınıfı
+    * - Daily görevlerini veritabanından yükler ve listeler
+    * - Yeni daily ekleme, düzenleme ve silme işlemlerini yönetir
+    * - Streak sayacını gösterir
+    * - Alt navigation bar ile diğer sayfalara geçiş sağlar
+  */
+
   List<Map<String, dynamic>> dailyTasks = [];
   int streakCount = 13;
 
@@ -41,13 +46,13 @@ class _DailyScreenState extends State<DailyScreen> {
       dailyTasks = results;
     });
     
-    print('📋 Aktif daily task\'lar yüklendi: ${dailyTasks.length}');
+    print('Aktif daily task\'lar yüklendi: ${dailyTasks.length}');
   }
 
   void _showAddDailyDialog() {
     showDialog(
       context: context,
-      barrierDismissible: true, // 🔧 Dışarıya tıklayınca kapanır
+      barrierDismissible: true,
       builder: (BuildContext context) {
         return AddDailyDialog(
           userId: widget.userId,
@@ -60,7 +65,7 @@ class _DailyScreenState extends State<DailyScreen> {
   void _showEditDailyDialog(Map<String, dynamic> daily) {
     showDialog(
       context: context,
-      barrierDismissible: true, // 🔧 Dışarıya tıklayınca kapanır
+      barrierDismissible: true,
       builder: (BuildContext context) {
         return EditDailyDialog(
           userId: widget.userId,
@@ -127,7 +132,6 @@ class _DailyScreenState extends State<DailyScreen> {
   @override
   Widget build(BuildContext context) {
     return Scaffold(
-      // Status bar'ı koyu yap
       appBar: PreferredSize(
         preferredSize: Size.zero,
         child: AppBar(
@@ -140,7 +144,7 @@ class _DailyScreenState extends State<DailyScreen> {
           ),
         ),
       ),
-      body: Stack( // 🆕 Stack eklendi
+      body: Stack(
         children: [
           Container(
             decoration: BoxDecoration(
@@ -156,7 +160,7 @@ class _DailyScreenState extends State<DailyScreen> {
             child: SafeArea(
               child: Column(
                 children: [
-                  // 🎯 Üst Bar
+                  // Üst Bar
                   Container(
                     decoration: BoxDecoration(
                       color: Color(0xFF1A1A1A),
@@ -171,7 +175,7 @@ class _DailyScreenState extends State<DailyScreen> {
                     padding: EdgeInsets.symmetric(horizontal: 20, vertical: 16),
                     child: Row(
                       children: [
-                        // 🚪 Logout icon
+                        // Logout icon
                         GestureDetector(
                           onTap: () => DialogUtils.showLogoutDialog(context),
                           child: Container(
@@ -188,7 +192,7 @@ class _DailyScreenState extends State<DailyScreen> {
                             ),
                           ),
                         ),
-                        // 📝 DAILIES başlığı - Dinamik genişlik
+                        // Dailies başlığı 
                         Expanded(
                           child: Container(
                             margin: EdgeInsets.symmetric(horizontal: 16),
@@ -222,7 +226,7 @@ class _DailyScreenState extends State<DailyScreen> {
                           ),
                         ),
                         
-                        // 🔥 Streak counter
+                        // Streak counter
                         Container(
                           padding: EdgeInsets.symmetric(horizontal: 12, vertical: 8),
                           decoration: BoxDecoration(
@@ -258,7 +262,7 @@ class _DailyScreenState extends State<DailyScreen> {
                     ),
                   ),
 
-                  // 🎯 Daily Task Listesi
+                  // Daily Task Listesi
                   Expanded(
                     child: SingleChildScrollView(
                       padding: EdgeInsets.symmetric(horizontal: 20),
@@ -266,7 +270,7 @@ class _DailyScreenState extends State<DailyScreen> {
                         children: [
                           SizedBox(height: 8),
                           ...dailyTasks.map((daily) => _buildDailyItem(daily)),
-                          SizedBox(height: 100), // Alt navigation için boşluk
+                          SizedBox(height: 100),
                         ],
                       ),
                     ),
@@ -276,10 +280,10 @@ class _DailyScreenState extends State<DailyScreen> {
             ),
           ),
           
-          // 🆕 Sağ alt köşede + butonu - Alt bara bitişik
+          // Sağ alt köşede + butonu
           Positioned(
-            right: 0, // Sağa tam bitişik
-            bottom: 90, // Alt barın hemen üstü
+            right: 0,
+            bottom: 90,
             child: GestureDetector(
               onTap: _showAddDailyDialog,
               child: Container(
@@ -287,7 +291,7 @@ class _DailyScreenState extends State<DailyScreen> {
                 height: 65,
                 decoration: BoxDecoration(
                   gradient: LinearGradient(
-                    colors: [Color(0xFF06B6D4), Color(0xFF8B5CF6)], // Daily renkleri
+                    colors: [Color(0xFF06B6D4), Color(0xFF8B5CF6)],
                     begin: Alignment.topLeft,
                     end: Alignment.bottomRight,
                   ),
@@ -299,7 +303,7 @@ class _DailyScreenState extends State<DailyScreen> {
                     BoxShadow(
                       color: Color(0xFF06B6D4).withOpacity(0.4),
                       blurRadius: 15,
-                      offset: Offset(-3, 0), // Sola doğru gölge
+                      offset: Offset(-3, 0),
                     ),
                   ],
                 ),
@@ -314,7 +318,7 @@ class _DailyScreenState extends State<DailyScreen> {
         ],
       ),
       
-      // 🆕 Alt Navigation Bar - 5 buton
+      // Alt Navigation Bar
       bottomNavigationBar: Container(
         height: 90,
         decoration: BoxDecoration(
@@ -328,7 +332,7 @@ class _DailyScreenState extends State<DailyScreen> {
           ],
         ),
         child: Row(
-          mainAxisAlignment: MainAxisAlignment.spaceEvenly, // 🔧 5 buton eşit dağılım
+          mainAxisAlignment: MainAxisAlignment.spaceEvenly,
           children: [
             _buildNavButton(
               icon: Icons.check_circle_outline,
@@ -342,10 +346,9 @@ class _DailyScreenState extends State<DailyScreen> {
             _buildNavButton(
               icon: Icons.assignment_outlined,
               color: Color(0xFF06B6D4),
-              isActive: true, // Daily aktif
+              isActive: true,
               onTap: () {},
             ),
-            // Planning sayfası
             _buildNavButton(
               icon: Icons.schedule,
               color: Color(0xFF10B981),
@@ -359,7 +362,7 @@ class _DailyScreenState extends State<DailyScreen> {
             _buildNavButton(
               icon: Icons.trending_up,
               color: Color(0xFFEC4899),
-              onTap: () {},
+              onTap: () => NavigationUtils.goToStatistics(context, widget.userId),
             ),
           ],
         ),
@@ -425,7 +428,6 @@ class _DailyScreenState extends State<DailyScreen> {
         },
         child: Row(
           children: [
-            // Daily container
             Expanded(
               child: Container(
                 padding: EdgeInsets.symmetric(horizontal: 24, vertical: 18),
@@ -512,27 +514,39 @@ class _DailyScreenState extends State<DailyScreen> {
   }
 }
 
-// Dialog sınıfları aynı kalacak...
 class EditDailyDialog extends StatefulWidget {
+  /*
+ * Daily görevi düzenleme dialog'u
+ * - Mevcut daily'nin bilgilerini düzenleme formu gösterir
+ * - Güncelleme işlemini veritabanına kaydeder
+ * - İşlem tamamlandığında ana sayfayı yeniler
+ */
   final int userId;
   final Map<String, dynamic> daily;
   final VoidCallback onDailyUpdated;
 
   const EditDailyDialog({
-    Key? key,
+    super.key,
     required this.userId,
     required this.daily,
     required this.onDailyUpdated,
-  }) : super(key: key);
+  });
 
   @override
   _EditDailyDialogState createState() => _EditDailyDialogState();
 }
 
 class _EditDailyDialogState extends State<EditDailyDialog> {
+  /*
+ * Daily düzenleme dialog'unun State sınıfı
+ * - Mevcut daily bilgilerini form alanlarına yükler
+ * - Başlık, açıklama, coin ödülü ve günleri düzenleme imkanı sağlar
+ * - Güncelleme işlemini veritabanına kaydeder
+ * - Gün seçimi değişirse bugünkü task'ı deaktif eder
+ */
   late TextEditingController _titleController;
   late TextEditingController _descriptionController;
-  late double _coinReward; // 🆕 Coin slider değeri
+  late double _coinReward;
   
   List<bool> selectedDays = [false, false, false, false, false, false, false];
   List<String> dayNames = ['M', 'T', 'W', 'T', 'F', 'S', 'S'];
@@ -542,7 +556,7 @@ class _EditDailyDialogState extends State<EditDailyDialog> {
     super.initState();
     _titleController = TextEditingController(text: widget.daily['title'] ?? '');
     _descriptionController = TextEditingController(text: widget.daily['description'] ?? '');
-    _coinReward = (widget.daily['coin_reward'] ?? 3).toDouble(); // 🆕 Mevcut coin değeri
+    _coinReward = (widget.daily['coin_reward'] ?? 3).toDouble();
     
     String savedDays = widget.daily['selected_days'] ?? '0,0,0,0,0,0,0';
     List<String> days = savedDays.split(',');
@@ -559,7 +573,7 @@ class _EditDailyDialogState extends State<EditDailyDialog> {
         width: MediaQuery.of(context).size.width * 0.85,
         padding: EdgeInsets.all(24),
         decoration: BoxDecoration(
-          color: Color(0xFF2D2D2D), // 🎨 Todo ile aynı renk
+          color: Color(0xFF2D2D2D),
           borderRadius: BorderRadius.circular(24),
           boxShadow: [
             BoxShadow(
@@ -572,7 +586,7 @@ class _EditDailyDialogState extends State<EditDailyDialog> {
         child: Column(
           mainAxisSize: MainAxisSize.min,
           children: [
-            // 🎯 Title Input - Todo ile aynı tasarım
+            // Title Input
             Container(
               padding: EdgeInsets.symmetric(horizontal: 16, vertical: 12),
               decoration: BoxDecoration(
@@ -606,7 +620,7 @@ class _EditDailyDialogState extends State<EditDailyDialog> {
             
             SizedBox(height: 20),
             
-            // 🎯 Description Input - Todo ile aynı tasarım
+            // Description Input
             Container(
               height: 120,
               padding: EdgeInsets.all(16),
@@ -640,7 +654,7 @@ class _EditDailyDialogState extends State<EditDailyDialog> {
             
             SizedBox(height: 20),
             
-            // 🆕 COIN SELECTION SECTION - Todo ile aynı tasarım
+            // Coin selection section
             Container(
               padding: EdgeInsets.all(20),
               decoration: BoxDecoration(
@@ -706,7 +720,7 @@ class _EditDailyDialogState extends State<EditDailyDialog> {
                   
                   SizedBox(height: 16),
                   
-                  // 🎯 Slider - Daily renkleri ile
+                  // Slider
                   SliderTheme(
                     data: SliderTheme.of(context).copyWith(
                       trackHeight: 6,
@@ -774,7 +788,7 @@ class _EditDailyDialogState extends State<EditDailyDialog> {
             
             SizedBox(height: 20),
             
-            // 🎯 Days Selection - Mevcut tasarım korundu
+            // Days Selection
             Container(
               padding: EdgeInsets.all(16),
               decoration: BoxDecoration(
@@ -847,7 +861,7 @@ class _EditDailyDialogState extends State<EditDailyDialog> {
 
             SizedBox(height: 28),
             
-            // 🎯 Update Daily Button - Todo ile aynı tasarım
+            // Update Daily Button
             GestureDetector(
               onTap: _updateDaily,
               child: Container(
@@ -855,7 +869,7 @@ class _EditDailyDialogState extends State<EditDailyDialog> {
                 padding: EdgeInsets.symmetric(vertical: 16),
                 decoration: BoxDecoration(
                   gradient: LinearGradient(
-                    colors: [Color(0xFF10B981), Color(0xFF059669)], // 🎨 Update için yeşil
+                    colors: [Color(0xFF10B981), Color(0xFF059669)],
                     begin: Alignment.centerLeft,
                     end: Alignment.centerRight,
                   ),
@@ -922,7 +936,7 @@ class _EditDailyDialogState extends State<EditDailyDialog> {
         'title': _titleController.text.trim(),
         'description': _descriptionController.text.trim(),
         'selected_days': selectedDaysString,
-        'coin_reward': _coinReward.round(), // 🆕 Slider değeri
+        'coin_reward': _coinReward.round(),
       },
       where: 'id = ?',
       whereArgs: [widget.daily['id']],
@@ -957,10 +971,10 @@ class _EditDailyDialogState extends State<EditDailyDialog> {
           widget.daily['id'],
           today,
         );
-        print('🔄 Daily güncellenince bugünkü task deaktif edildi');
+        print('Daily güncellenince bugünkü task deaktif edildi');
       }
     } catch (e) {
-      print('❌ Bugünkü task deaktif etme hatası: $e');
+      print('Bugünki task deaktif etme hatası: $e');
     }
   }
 
@@ -973,6 +987,13 @@ class _EditDailyDialogState extends State<EditDailyDialog> {
 }
 
 class AddDailyDialog extends StatefulWidget {
+  /*
+ * Yeni daily görevi ekleme dialog'u
+ * - Daily oluşturma formu gösterir
+ * - Başlık, açıklama, coin ödülü ve günleri seçme imkanı sağlar
+ * - Yeni daily'yi veritabanına kaydeder
+ * - İşlem tamamlandığında ana sayfayı yeniler
+ */
   final int userId;
   final VoidCallback onDailyAdded;
 
@@ -987,6 +1008,13 @@ class AddDailyDialog extends StatefulWidget {
 }
 
 class _AddDailyDialogState extends State<AddDailyDialog> {
+  /*
+ * Daily ekleme dialog'unun State sınıfı
+ * - Boş form alanları ile yeni daily oluşturma imkanı sağlar
+ * - Başlık, açıklama, coin ödülü (1-5 arası) ve günleri seçme
+ * - Form validasyonu yapar (başlık ve en az bir gün zorunlu)
+ * - Yeni daily'yi veritabanına kaydeder ve günlük task'ları oluşturur
+ */
   final _titleController = TextEditingController();
   final _descriptionController = TextEditingController();
   double _coinReward = 3.0; // 🆕 Default 3 coins
@@ -1015,7 +1043,7 @@ class _AddDailyDialogState extends State<AddDailyDialog> {
         child: Column(
           mainAxisSize: MainAxisSize.min,
           children: [
-            // 🎯 Title Input
+            // Title Input
             Container(
               padding: EdgeInsets.symmetric(horizontal: 16, vertical: 12),
               decoration: BoxDecoration(
@@ -1049,7 +1077,7 @@ class _AddDailyDialogState extends State<AddDailyDialog> {
             
             SizedBox(height: 20),
             
-            // 🎯 Description Input
+            // Description Input
             Container(
               height: 120,
               padding: EdgeInsets.all(16),
@@ -1083,7 +1111,7 @@ class _AddDailyDialogState extends State<AddDailyDialog> {
             
             SizedBox(height: 24),
             
-            // 🆕 COIN SELECTION SECTION
+            // Coin selection
             Container(
               padding: EdgeInsets.all(20),
               decoration: BoxDecoration(
@@ -1149,7 +1177,7 @@ class _AddDailyDialogState extends State<AddDailyDialog> {
                   
                   SizedBox(height: 16),
                   
-                  // 🎯 Slider
+                  // Slider
                   SliderTheme(
                     data: SliderTheme.of(context).copyWith(
                       trackHeight: 6,
@@ -1217,7 +1245,7 @@ class _AddDailyDialogState extends State<AddDailyDialog> {
             
             SizedBox(height: 20),
             
-            // 🎯 Days Selection
+            // Days Selection
             Container(
               padding: EdgeInsets.all(16),
               decoration: BoxDecoration(
@@ -1290,7 +1318,7 @@ class _AddDailyDialogState extends State<AddDailyDialog> {
             
             SizedBox(height: 28),
             
-            // 🎯 Add Daily Button
+            // Add Daily Button
             GestureDetector(
               onTap: _addDaily,
               child: Container(
@@ -1371,18 +1399,8 @@ class _AddDailyDialogState extends State<AddDailyDialog> {
     await DatabaseHelper.instance.generateDailyTasksForUser(widget.userId);
 
     Navigator.pop(context);
-    widget.onDailyAdded(); // Bu satırı popup kapandıktan sonra çağır
-    
-    // ScaffoldMessenger.of(context).showSnackBar(
-    //   SnackBar(
-    //     content: Text('Daily added successfully! (+${_coinReward.round()} 🪙)'),
-    //     backgroundColor: Color(0xFF06B6D4),
-    //     behavior: SnackBarBehavior.floating,
-    //     shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(12)),
-    //   ),
-    // );
+    widget.onDailyAdded();
   }
-
 
   @override
   void dispose() {

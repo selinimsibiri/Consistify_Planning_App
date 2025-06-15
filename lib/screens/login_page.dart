@@ -1,7 +1,9 @@
 import 'dart:convert';
+import 'dart:math';
 
 import 'package:crypto/crypto.dart';
 import 'package:flutter/material.dart';
+import 'package:intl/intl.dart';
 import 'package:sayfa_yonlendirme/db/database_helper.dart';
 import 'package:sayfa_yonlendirme/screens/profile_screen.dart';
 import 'package:sayfa_yonlendirme/screens/signup_page.dart';
@@ -17,10 +19,9 @@ class LogInPage extends StatefulWidget {
 }
 
 class _LogInPageState extends State<LogInPage> {
+  final DatabaseHelper _databaseHelper = DatabaseHelper.instance;
   final TextEditingController _emailController = TextEditingController();
   final TextEditingController _passwordController = TextEditingController();
-
-  List<String> columns = [];
   
   void _tryLogin() async {
     final email = _emailController.text;
@@ -61,21 +62,6 @@ class _LogInPageState extends State<LogInPage> {
           backgroundColor: Colors.red,
         ),
       );
-    }
-  }
-
-
-
-  Future<void> fetchColumns() async {
-    try {
-      List<String> fetchedColumns = await DatabaseHelper.instance.getUsersTableColumns();
-      // Kolonları konsola yazdır
-      print('\n***\nUsers tablosundaki kolonlar:\n***\n');
-      for (var column in fetchedColumns) {
-        print(column);
-      }
-    } catch (e) {
-      print("\n***\nHata: $e\n***\n");
     }
   }
 
@@ -204,13 +190,8 @@ class _LogInPageState extends State<LogInPage> {
                   // forgot password
                   Center(
                     child: InkWell(
-                      onTap: () {
-                        // Navigator.push(
-                        //   context,
-                        //   MaterialPageRoute(
-                        //     builder: (context) => SignUpPage(),
-                        //   ),
-                        // );
+                      onTap: () async {
+                        await generateTestData(1);
                       },
                       child:
                        Text(
@@ -233,7 +214,6 @@ class _LogInPageState extends State<LogInPage> {
                     child: ElevatedButton(
                       onPressed: () {
                        _tryLogin();  // Burada _tryLogin fonksiyonunu çağırıyoruz,
-                        //resetDatabaseAndFetchColumns();
                       },
                       style: ElevatedButton.styleFrom(
                         backgroundColor: Color(0xFF984fff), // Mor renk
@@ -296,4 +276,201 @@ class _LogInPageState extends State<LogInPage> {
           ),
     );
   }
+
+  Future<void> generateTestData(int userId) async {
+    try {
+      final db = await _databaseHelper.database;
+      final random = Random();
+      final now = DateTime.now();
+      
+      // Önce mevcut verileri temizle
+      await db.delete('user_stats', where: 'user_id = ?', whereArgs: [userId]);
+      await db.delete('tasks', where: 'user_id = ?', whereArgs: [userId]);
+      await db.delete('streaks', where: 'user_id = ?', whereArgs: [userId]);
+      await db.delete('daily_templates', where: 'user_id = ?', whereArgs: [userId]);
+      
+      // Kullanıcının var olduğundan emin olalım
+      final userExists = await db.query('users', where: 'id = ?', whereArgs: [userId]);
+      if (userExists.isEmpty) {
+        await db.insert('users', {
+          'id': userId,
+          'username': 'testuser',
+          'email': 'test@example.com',
+          'password_hash': 'hashedpassword123',
+          'coins': 500,
+          'created_at': now.subtract(Duration(days: 70)).toIso8601String()
+        });
+        print('✅ Test kullanıcısı oluşturuldu');
+      } else {
+        print('✅ Test kullanıcısı zaten mevcut');
+      }
+      
+      // Günlük şablonlar oluştur
+      List<int> dailyTemplateIds = [];
+      List<String> dailyTitles = [
+        'Sabah Sporu', 
+        'Su İçmek', 
+        'Okuma Zamanı', 
+        'Meditasyon', 
+        'Kod Yazma Pratiği'
+      ];
+      
+      for (var title in dailyTitles) {
+        final id = await db.insert('daily_templates', {
+          'user_id': userId,
+          'title': title,
+          'description': '$title için günlük hatırlatma',
+          'selected_days': '1,2,3,4,5,6,7', // Her gün
+          'coin_reward': 5 + random.nextInt(10),
+          'is_active': 1,
+          'created_at': now.subtract(Duration(days: 65)).toIso8601String()
+        });
+        dailyTemplateIds.add(id);
+      }
+      print('✅ ${dailyTemplateIds.length} adet günlük şablon oluşturuldu');
+      
+      // One-time görevler için başlıklar
+      List<String> oneTimeTitles = [
+        'Alışveriş Yap',
+        'Fatura Öde',
+        'Rapor Hazırla',
+        'Kitap Bitir',
+        'Proje Teslim Et',
+        'Ev Temizliği',
+        'Aile Ziyareti',
+        'Diş Hekimi Randevusu',
+        'Araba Bakımı',
+        'Doğum Günü Hediyesi Al'
+      ];
+      
+      int totalTasksCreated = 0;
+      int totalStatsCreated = 0;
+      int totalStreaksCreated = 0;
+      
+      // Son 60 gün için veriler oluştur
+      for (int i = 60; i >= 0; i--) {
+        final date = now.subtract(Duration(days: i));
+        final dateStr = DateFormat('yyyy-MM-dd').format(date);
+        
+        // Her gün için 1-3 one-time görev ekle
+        int oneTimeTaskCount = 1 + random.nextInt(3);
+        int completedOneTimeCount = 0;
+        
+        for (int j = 0; j < oneTimeTaskCount; j++) {
+          final title = oneTimeTitles[random.nextInt(oneTimeTitles.length)];
+          final isCompleted = random.nextDouble() > 0.3 ? 1 : 0; // %70 tamamlanma olasılığı
+          
+          if (isCompleted == 1) {
+            completedOneTimeCount++;
+          }
+          
+          await db.insert('tasks', {
+            'user_id': userId,
+            'title': '$title - $dateStr',
+            'description': 'Bu bir test görevidir',
+            'type': 'one_time',
+            'coin_reward': 10 + random.nextInt(15),
+            'is_active': 1,
+            'is_completed': isCompleted,
+            'created_at': dateStr
+          });
+          totalTasksCreated++;
+        }
+        
+        // Her gün için daily template'lerden görevler oluştur
+        int dailyTaskCount = 0;
+        int completedDailyCount = 0;
+        
+        for (var templateId in dailyTemplateIds) {
+          // Her şablon için %80 olasılıkla görev oluştur
+          if (random.nextDouble() < 0.8) {
+            dailyTaskCount++;
+            final isCompleted = random.nextDouble() > 0.2 ? 1 : 0; // %80 tamamlanma olasılığı
+            
+            if (isCompleted == 1) {
+              completedDailyCount++;
+            }
+            
+            await db.insert('tasks', {
+              'user_id': userId,
+              'title': dailyTitles[dailyTemplateIds.indexOf(templateId)],
+              'description': 'Günlük görev',
+              'type': 'daily',
+              'daily_template_id': templateId,
+              'coin_reward': 5 + random.nextInt(5),
+              'is_active': 1,
+              'is_completed': isCompleted,
+              'created_at': dateStr
+            });
+            totalTasksCreated++;
+          }
+        }
+        
+        // Toplam görev sayısı
+        final totalTasks = oneTimeTaskCount + dailyTaskCount;
+        final completedTasks = completedOneTimeCount + completedDailyCount;
+        final completionRate = totalTasks > 0 ? (completedTasks * 100.0 / totalTasks) : 0.0;
+        
+        // Kazanılan coinler (tamamlanan görev başına 5-15 coin)
+        final coinsEarned = completedTasks * (5 + random.nextInt(10));
+        
+        // Streak hesapla (son 7 günde en az 1 görev tamamlanmışsa streak devam eder)
+        int streakCount = 0;
+        if (i <= 7) {
+          // Basit bir streak hesaplama - gerçek uygulamada daha karmaşık olabilir
+          streakCount = min(7 - i, 7); // Son 7 gün için artan streak
+        } else {
+          streakCount = random.nextInt(7); // Rastgele streak değeri
+        }
+        
+        // User stats tablosuna günlük istatistikleri ekle
+        // Önce bu tarih için kayıt var mı kontrol et
+        final existingStats = await db.query('user_stats', 
+            where: 'user_id = ? AND date = ?', 
+            whereArgs: [userId, dateStr]);
+        
+        if (existingStats.isEmpty) {
+          await db.insert('user_stats', {
+            'user_id': userId,
+            'date': dateStr,
+            'total_tasks': totalTasks,
+            'completed_tasks': completedTasks,
+            'completion_rate': completionRate,
+            'daily_tasks': dailyTaskCount,
+            'onetime_tasks': oneTimeTaskCount,
+            'streak_count': streakCount,
+            'coins_earned': coinsEarned,
+            'created_at': dateStr
+          });
+          totalStatsCreated++;
+        }
+        
+        // Streak tablosuna da ekle
+        if (completedTasks > 0) {
+          final existingStreak = await db.query('streaks',
+              where: 'user_id = ? AND date = ?',
+              whereArgs: [userId, dateStr]);
+              
+          if (existingStreak.isEmpty) {
+            await db.insert('streaks', {
+              'user_id': userId,
+              'date': dateStr,
+              'completed_tasks': completedTasks
+            });
+            totalStreaksCreated++;
+          }
+        }
+      }
+      
+      print('✅ Test verileri başarıyla oluşturuldu!');
+      print('📊 Oluşturulan görev sayısı: $totalTasksCreated');
+      print('📊 Oluşturulan istatistik kaydı sayısı: $totalStatsCreated');
+      print('📊 Oluşturulan streak kaydı sayısı: $totalStreaksCreated');
+      
+    } catch (e) {
+      print('❌ Test verisi oluşturma hatası: $e');
+    }
+  }
+
+
 }

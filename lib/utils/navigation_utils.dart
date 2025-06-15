@@ -1,5 +1,7 @@
 // lib/utils/navigation_utils.dart
 import 'package:flutter/material.dart';
+import 'package:sayfa_yonlendirme/screens/statistics_screen.dart';
+import 'package:sayfa_yonlendirme/screens/weekly_summary_screen.dart';
 import 'package:sayfa_yonlendirme/utils/app_routes.dart';
 import 'package:sayfa_yonlendirme/utils/app_routes.dart';
 import '../screens/todo_screen.dart';
@@ -57,6 +59,17 @@ class NavigationUtils {
       ),
     );
   }
+
+  // 🎯 Profile sayfasına git
+  static void goToStatistics(BuildContext context, int userId) {
+    Navigator.push(
+      context,
+      AppRoutes.createRoute(
+        StatisticsScreen(userId: userId),
+        type: RouteType.fade,
+      ),
+    );
+  }
   
   // 🎯 Geri git
   static void goBack(BuildContext context, [dynamic result]) {
@@ -79,4 +92,16 @@ class NavigationUtils {
       AppRoutes.createRoute(page, type: RouteType.fade),
     );
   }
+
+  // 📊 Weekly Summary sayfasına git
+  static void goToWeeklySummary(BuildContext context, int userId) {
+    Navigator.push(
+      context,
+      AppRoutes.createRoute(
+        WeeklySummaryScreen(userId: userId),
+        type: RouteType.slide,
+      ),
+    );
+  }
+
 }

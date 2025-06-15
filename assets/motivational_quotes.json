@@ -1,0 +1,37 @@
+// assets/motivational_quotes.json
+{
+  "high_performance": [
+    "Harika gidiyorsun! Başarı senin için bir alışkanlık olmuş! 🔥",
+    "Sen gerçek bir şampiyon gibi davranıyorsun! 🏆",
+    "Bu performans ile sınırların yok! ⚡",
+    "Mükemmellik senin doğan! Böyle devam! 🌟",
+    "Görev makinesi modunda çalışıyorsun! 🤖",
+    "Efsane performans sergiliyorsun! 💫",
+    "Sen bir başarı hikayesisin! 📚"
+  ],
+  "good_performance": [
+    "İyi bir tempoda ilerliyorsun! 💪",
+    "Kararlılığın seni başarıya götürüyor! 🎯",
+    "Her gün biraz daha güçleniyorsun! 📈",
+    "Hedeflerine odaklanmış bir şekilde ilerliyorsun! 🚀",
+    "Tutarlılığın takdire şayan! 👏",
+    "Bu momentum ile çok uzağa gideceksin! 🌟"
+  ],
+  "moderate_performance": [
+    "Başlangıç her zaman zordur, ama sen yapabilirsin! 🌱",
+    "Küçük adımlar büyük değişimlere yol açar! 👣",
+    "Bugün dünden daha iyi olman yeterli! 📊",
+    "Gelişim sürecinde olman harika! 🌿",
+    "Her gün yeni bir fırsat! 🌅",
+    "Sabır ve kararlılık seni başarıya götürüyor! ⏰"
+  ],
+  "low_performance": [
+    "Her büyük yolculuk tek bir adımla başlar! 🚶‍♂️",
+    "Potansiyelin sonsuz, sadece harekete geç! 💎",
+    "Başarısızlık değil, öğrenme fırsatı! 📚",
+    "Yarın yeni bir gün, yeni bir şans! 🌅",
+    "İçindeki gücü keşfetme zamanı! 💪",
+    "Her uzman bir zamanlar acemiydi! 🎓",
+    "Bugün mükemmel bir başlangıç günü! ✨"
+  ]
+}
