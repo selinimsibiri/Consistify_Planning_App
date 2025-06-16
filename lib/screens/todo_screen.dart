@@ -43,7 +43,8 @@ class _TodoScreenState extends State<TodoScreen> {
   }
 
   Future<void> _initializeTodoScreen() async {
-    await DatabaseHelper.instance.generateDailyTasksForUser(widget.userId);
+    // Eski görevleri inactive yap ve yeni görevleri oluştur
+    await DatabaseHelper.instance.resetAndGenerateDailyTasks(widget.userId);
     await _loadTasks();
     await _loadUserCoins();
     await _loadCompletedTasks();
@@ -54,23 +55,25 @@ class _TodoScreenState extends State<TodoScreen> {
 
     final oneTimeResults = await db.query(
       'tasks',
-      where: 'user_id = ? AND type = ?',
+      where: 'user_id = ? AND type = ? AND is_active = 1',
       whereArgs: [widget.userId, 'one_time'],
       orderBy: 'id ASC',
     );
     
     final dailyResults = await db.query(
       'tasks',
-      where: 'user_id = ? AND type = ?',
+      where: 'user_id = ? AND type = ? AND is_active = 1',
       whereArgs: [widget.userId, 'daily'],
       orderBy: 'id ASC',
     );
+    
     setState(() {
       oneTimeTasks = oneTimeResults;
       dailyTasks = dailyResults;
     });
     print('📋 Yüklenen görevler: ${oneTimeTasks.length} one-time, ${dailyTasks.length} daily');
   }
+
 
   Future<void> _loadCompletedTasks() async {
     print('🔄 Completed tasks yükleniyor...');

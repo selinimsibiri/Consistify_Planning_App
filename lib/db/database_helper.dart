@@ -706,7 +706,7 @@ class DatabaseHelper {
           'newCoinTotal': 0,
           'streakCount': 0,
           'completionRate': 0.0,
-          // KALDIRILDI: 'achievements': <String>[],
+          'achievements': <String>[],
         };
         
         if (isCompleted) {
@@ -814,7 +814,38 @@ class DatabaseHelper {
         'newCoinTotal': 0,
         'streakCount': 0,
         'completionRate': 0.0,
+        'achievements': <String>[],
       };
+    }
+  }
+  
+  Future<void> resetAndGenerateDailyTasks(int userId) async {
+    final db = await database;
+    final today = DateTime.now().toIso8601String().split('T')[0]; // Bugünün tarihi (YYYY-MM-DD)
+    
+    try {
+      // 1. Önceki günlerin daily task'larını inactive yap
+      await db.update(
+        'tasks',
+        {'is_active': 0},
+        where: 'type = ? AND DATE(created_at) < ? AND is_active = 1',
+        whereArgs: ['daily', today],
+      );
+      
+      // 2. Önceki günlerin tamamlanmamış one-time task'larını inactive yap
+      await db.update(
+        'tasks',
+        {'is_active': 0},
+        where: 'type = ? AND DATE(created_at) < ? AND is_active = 1',
+        whereArgs: ['one_time', today],
+      );
+      
+      // 3. Bugün için daily task'ları oluştur - mevcut fonksiyonu kullan
+      await generateDailyTasksForUser(userId);
+      
+      print('📅 Daily ve one-time task reset işlemi tamamlandı');
+    } catch (e) {
+      print('❌ Task reset işleminde hata: $e');
     }
   }
   /* GÖREV SİSTEMİ FONKSİYONLARI SONU */

@@ -1,4 +1,3 @@
-// lib/widgets/daily_analytics_card.dart
 import 'package:flutter/material.dart';
 
 class DailyAnalyticsCard extends StatelessWidget {
@@ -70,7 +69,49 @@ class DailyAnalyticsCard extends StatelessWidget {
               child: Center(
                 child: TextButton(
                   onPressed: () {
-                    // Tüm daily'leri göster
+                    // Pop-up ile tüm daily'leri göster
+                    showDialog(
+                      context: context,
+                      builder: (context) => AlertDialog(
+                        backgroundColor: Color(0xFF2D2D2D),
+                        title: Text(
+                          'All Daily Tasks',
+                          style: TextStyle(
+                            color: Colors.white,
+                            fontSize: 18,
+                            fontWeight: FontWeight.bold,
+                          ),
+                        ),
+                        content: Container(
+                          width: double.maxFinite,
+                          constraints: BoxConstraints(
+                            maxHeight: MediaQuery.of(context).size.height * 0.6,
+                          ),
+                          child: ListView.builder(
+                            shrinkWrap: true,
+                            itemCount: dailyAnalytics.length,
+                            itemBuilder: (context, index) {
+                              return _buildDailyItemForPopup(dailyAnalytics[index]);
+                            },
+                          ),
+                        ),
+                        actions: [
+                          TextButton(
+                            onPressed: () => Navigator.pop(context),
+                            child: Text(
+                              'Kapat',
+                              style: TextStyle(
+                                color: Color(0xFF06B6D4),
+                                fontWeight: FontWeight.bold,
+                              ),
+                            ),
+                          ),
+                        ],
+                        shape: RoundedRectangleBorder(
+                          borderRadius: BorderRadius.circular(16),
+                        ),
+                      ),
+                    );
                   },
                   child: Text(
                     'View All (${dailyAnalytics.length})',
@@ -82,6 +123,115 @@ class DailyAnalyticsCard extends StatelessWidget {
                 ),
               ),
             ),
+
+        ],
+      ),
+    );
+  }
+
+  Widget _buildDailyItemForPopup(Map<String, dynamic> daily) {
+    // Null-safe değer alma
+    final completionRate = _safeDouble(daily['completion_rate']);
+    final grade = _safeString(daily['performance_grade']) ?? 'N/A';
+    final title = _safeString(daily['title']) ?? 'Unknown Task';
+    final completedCount = _safeInt(daily['completed_count']);
+    final totalGenerated = _safeInt(daily['total_generated']);
+    final color = _getGradeColor(grade);
+    
+    return Container(
+      margin: EdgeInsets.only(bottom: 8),
+      padding: EdgeInsets.all(12),
+      decoration: BoxDecoration(
+        color: Colors.white.withOpacity(0.05),
+        borderRadius: BorderRadius.circular(10),
+        border: Border.all(
+          color: color.withOpacity(0.3),
+          width: 1,
+        ),
+      ),
+      child: Row(
+        children: [
+          // Grade Badge
+          Container(
+            width: 32,
+            height: 32,
+            decoration: BoxDecoration(
+              color: color.withOpacity(0.2),
+              shape: BoxShape.circle,
+            ),
+            child: Center(
+              child: Text(
+                grade,
+                style: TextStyle(
+                  color: color,
+                  fontSize: 12,
+                  fontWeight: FontWeight.bold,
+                ),
+              ),
+            ),
+          ),
+          
+          SizedBox(width: 12),
+          
+          // Task Info
+          Expanded(
+            child: Column(
+              crossAxisAlignment: CrossAxisAlignment.start,
+              children: [
+                Text(
+                  title,
+                  style: TextStyle(
+                    color: Colors.white,
+                    fontSize: 14,
+                    fontWeight: FontWeight.w500,
+                  ),
+                  maxLines: 1,
+                  overflow: TextOverflow.ellipsis,
+                ),
+                SizedBox(height: 2),
+                Text(
+                  '$completedCount/$totalGenerated completed',
+                  style: TextStyle(
+                    color: Colors.white60,
+                    fontSize: 11,
+                  ),
+                ),
+              ],
+            ),
+          ),
+          
+          // Completion Rate
+          Column(
+            crossAxisAlignment: CrossAxisAlignment.end,
+            children: [
+              Text(
+                '${completionRate.round()}%',
+                style: TextStyle(
+                  color: color,
+                  fontSize: 14,
+                  fontWeight: FontWeight.bold,
+                ),
+              ),
+              Container(
+                width: 50,
+                height: 3,
+                decoration: BoxDecoration(
+                  color: Colors.grey.withOpacity(0.3),
+                  borderRadius: BorderRadius.circular(1.5),
+                ),
+                child: FractionallySizedBox(
+                  alignment: Alignment.centerLeft,
+                  widthFactor: (completionRate / 100).clamp(0.0, 1.0),
+                  child: Container(
+                    decoration: BoxDecoration(
+                      color: color,
+                      borderRadius: BorderRadius.circular(1.5),
+                    ),
+                  ),
+                ),
+              ),
+            ],
+          ),
         ],
       ),
     );

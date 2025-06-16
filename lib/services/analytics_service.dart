@@ -1,4 +1,6 @@
 // lib/services/analytics_service.dart
+// ignore_for_file: avoid_print
+
 import 'package:sayfa_yonlendirme/db/database_helper.dart';
 
 class AnalyticsService {
@@ -7,10 +9,85 @@ class AnalyticsService {
   // Today's Performance Analysis
   Future<Map<String, dynamic>> getTodayPerformanceAnalysis(int userId) async {
     try {
+      print('📊 getTodayPerformanceAnalysis başlıyor - userId: $userId');
       final todayStats = await _databaseHelper.getTodayTaskStats(userId);
+      print('📊 getTodayTaskStats ham sonuç: $todayStats');
       
       // Null kontrolü
       if (todayStats.isEmpty) {
+        print('📊 todayStats boş, varsayılan değerler dönülüyor');
+      }
+      
+      // Her bir anahtarı ve değerini yazdır
+      todayStats.forEach((key, value) {
+        print('📊 Anahtar: $key, Değer: $value, Tip: ${value?.runtimeType}');
+      });      
+        // Null kontrolü
+        if (todayStats.isEmpty) {
+          return {
+            'total_tasks': 0,
+            'completed_tasks': 0,
+            'completion_rate': 0.0,
+            'performance_grade': 'F',
+            'performance_level': 'low_performance',
+            'performance_color': _getGradeColor('F'),
+            'performance_emoji': _getPerformanceEmoji('F'),
+            'coins_earned': 0,
+            'active_duration': 0,
+            'avg_task_duration': 0,
+            'category_performance': [],
+          };
+        }
+        
+        // Tüm değerleri güvenli şekilde dönüştür
+        final Map<String, dynamic> safeStats = {};
+        todayStats.forEach((key, value) {
+          if (key == 'category_performance' && value != null) {
+            // Kategori performansını güvenli şekilde dönüştür
+            safeStats[key] = (value as List?)?.map((item) {
+              if (item is Map) {
+                Map<String, dynamic> safeItem = {};
+                item.forEach((k, v) {
+                  if (k == 'completion_rate') {
+                    safeItem[k] = _safeDouble(v);
+                  } else if (k == 'task_count' || k == 'completed_count') {
+                    safeItem[k] = _safeInt(v);
+                  } else {
+                    safeItem[k] = v;
+                  }
+                });
+                return safeItem;
+              }
+              return <String, dynamic>{};
+            })?.toList() ?? [];
+          } else if (key == 'completion_rate') {
+            safeStats[key] = _safeDouble(value);
+          } else if (['total_tasks', 'completed_tasks', 'coins_earned', 
+                    'active_duration', 'avg_task_duration'].contains(key)) {
+            safeStats[key] = _safeInt(value);
+          } else {
+            safeStats[key] = value;
+          }
+        });
+        
+        // Güvenli tip dönüşümü ile completion_rate değerini al
+        final completionRate = _safeDouble(safeStats['completion_rate']);
+        final performanceGrade = _calculatePerformanceGrade(completionRate);
+        final performanceLevel = _getPerformanceLevel(completionRate);
+        
+        return {
+          ...safeStats,
+          'performance_grade': performanceGrade,
+          'performance_level': performanceLevel,
+          'performance_color': _getGradeColor(performanceGrade),
+          'performance_emoji': _getPerformanceEmoji(performanceGrade),
+        };
+      } catch (e) {
+        print('❌ getTodayPerformanceAnalysis hatası: $e');
+        print('❌ Hata detayı: ${e.toString()}');
+        // Hata ayıklama için stack trace ekleyin
+        print('❌ Stack trace: ${StackTrace.current}');
+        
         return {
           'total_tasks': 0,
           'completed_tasks': 0,
@@ -25,84 +102,70 @@ class AnalyticsService {
           'category_performance': [],
         };
       }
-      
-      // Güvenli tip dönüşümü
-      final completionRate = _safeDouble(todayStats['completion_rate']);
-      final performanceGrade = _calculatePerformanceGrade(completionRate);
-      final performanceLevel = _getPerformanceLevel(completionRate);
-      
-      return {
-        ...todayStats,
-        'performance_grade': performanceGrade,
-        'performance_level': performanceLevel,
-        'performance_color': _getGradeColor(performanceGrade),
-        'performance_emoji': _getPerformanceEmoji(performanceGrade),
-      };
-    } catch (e) {
-      print('❌ getTodayPerformanceAnalysis hatası: $e');
-      return {
-        'total_tasks': 0,
-        'completed_tasks': 0,
-        'completion_rate': 0.0,
-        'performance_grade': 'F',
-        'performance_level': 'low_performance',
-        'performance_color': _getGradeColor('F'),
-        'performance_emoji': _getPerformanceEmoji('F'),
-        'coins_earned': 0,
-        'active_duration': 0,
-        'avg_task_duration': 0,
-        'category_performance': [],
-      };
-    }
   }
 
-  // Daily Analytics with Performance Grades (Son 7 gün)
-  // lib/services/analytics_service.dart içinde
 
+  // Daily Analytics with Performance Grades (Son 7 gün)
   Future<List<Map<String, dynamic>>> getDailyAnalyticsWithGrades(int userId) async {
     try {
       final db = await _databaseHelper.database;
       
-      // Daily template ve task ilişkisini kullanarak analiz et
+      // Daily template ve task ilişkisini kullanarak son 30 günün analizi
       final result = await db.rawQuery('''
         SELECT 
-          dt.title,
           dt.id,
+          dt.title,
           COUNT(t.id) as total_generated,
           SUM(CASE WHEN t.is_completed = 1 THEN 1 ELSE 0 END) as completed_count,
-          ROUND(
-            (SUM(CASE WHEN t.is_completed = 1 THEN 1 ELSE 0 END) * 100.0) / 
-            NULLIF(COUNT(t.id), 0), 
-            2
-          ) as completion_rate
+          CASE 
+            WHEN COUNT(t.id) > 0 THEN 
+              ROUND((SUM(CASE WHEN t.is_completed = 1 THEN 1 ELSE 0 END) * 100.0) / COUNT(t.id), 2)
+            ELSE 0 
+          END as completion_rate
         FROM daily_templates dt
         LEFT JOIN tasks t ON dt.id = t.daily_template_id
         WHERE dt.user_id = ? 
           AND t.created_at >= date('now', '-30 days')
+          -- is_active filtresini kaldırdık
         GROUP BY dt.id, dt.title
-        HAVING COUNT(t.id) > 0
+        -- HAVING COUNT(t.id) > 0
         ORDER BY completion_rate DESC
       ''', [userId]);
 
-      return result.map((row) {
+
+      print('📊 Daily Analytics - Raw SQL result: ${result.length} records');
+      
+      // Sonuçları işle ve debug bilgisi ekle
+      final processedResults = result.map((row) {
+        final totalGenerated = _safeInt(row['total_generated']);
+        final completedCount = _safeInt(row['completed_count']);
         final completionRate = _safeDouble(row['completion_rate']);
-        final grade = _calculateGrade(completionRate);
+        
+        // Doğru yüzde hesaplaması için güvenlik kontrolü
+        final calculatedRate = totalGenerated > 0 
+            ? (completedCount * 100.0 / totalGenerated) 
+            : 0.0;
+        
+        final grade = _calculateGrade(calculatedRate);
+        
+        print('📊 Daily: ${row['title']} - Generated: $totalGenerated, Completed: $completedCount, Rate: ${calculatedRate.toStringAsFixed(1)}%, Grade: $grade');
         
         return {
+          'id': row['id'],
           'title': row['title']?.toString() ?? 'Unknown Task',
-          'total_generated': _safeInt(row['total_generated']),
-          'completed_count': _safeInt(row['completed_count']),
-          'completion_rate': completionRate,
+          'total_generated': totalGenerated,
+          'completed_count': completedCount,
+          'completion_rate': calculatedRate, // SQL'den gelen değer yerine hesaplanan değeri kullan
           'performance_grade': grade,
         };
       }).toList();
       
+      return processedResults;
     } catch (e) {
       print('❌ getDailyAnalyticsWithGrades hatası: $e');
       return [];
     }
   }
-
 
   // Helper methods (eğer yoksa ekleyin)
   double _safeDouble(dynamic value) {
@@ -315,26 +378,27 @@ class AnalyticsService {
       final db = await _databaseHelper.database;
       
       // Daily tasks'ları analiz et - daily_templates ve tasks tablolarını kullanarak
-      final result = await db.rawQuery('''
-        SELECT 
-          dt.title,
-          dt.id,
-          COUNT(t.id) as total_generated,
-          SUM(CASE WHEN t.is_completed = 1 THEN 1 ELSE 0 END) as completed_count,
-          ROUND(
-            (SUM(CASE WHEN t.is_completed = 1 THEN 1 ELSE 0 END) * 100.0) / 
-            NULLIF(COUNT(t.id), 0), 
-            2
-          ) as completion_rate
-        FROM daily_templates dt
-        LEFT JOIN tasks t ON dt.id = t.daily_template_id
-        WHERE dt.user_id = ? 
-          AND t.created_at >= date('now', '-30 days')
-          AND t.type = 'daily'
-        GROUP BY dt.id, dt.title
-        HAVING COUNT(t.id) > 0
-        ORDER BY completion_rate ASC  -- En düşük completion rate'ler önce
-      ''', [userId]);
+          final result = await db.rawQuery('''
+            SELECT 
+              dt.title,
+              dt.id,
+              COUNT(t.id) as total_generated,
+              SUM(CASE WHEN t.is_completed = 1 THEN 1 ELSE 0 END) as completed_count,
+              ROUND(
+                (SUM(CASE WHEN t.is_completed = 1 THEN 1 ELSE 0 END) * 100.0) / 
+                NULLIF(COUNT(t.id), 0), 
+                2
+              ) as completion_rate
+            FROM daily_templates dt
+            LEFT JOIN tasks t ON dt.id = t.daily_template_id
+            WHERE dt.user_id = ? 
+              AND t.created_at >= date('now', '-30 days')
+              -- is_active filtresini kaldırdık
+            GROUP BY dt.id, dt.title
+            HAVING COUNT(t.id) > 0
+            ORDER BY completion_rate ASC  -- En düşük completion rate'ler önce
+          ''', [userId]);
+
 
       // Geri kalan kod aynı kalabilir...
       List<Map<String, dynamic>> needsImprovement = [];
