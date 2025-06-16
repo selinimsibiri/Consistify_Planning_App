@@ -1493,4 +1493,19 @@ class DatabaseHelper {
     return achievements;
   }
   /* BAŞARIM SİSTEMİ FONKSİYONLARI SONU */
+
+  Future<int> getTotalIncompleteTaskCount(int userId) async {
+    final db = await database;
+
+    final result = await db.rawQuery('''
+      SELECT COUNT(*) as count
+      FROM tasks
+      WHERE user_id = ? AND is_completed = 0
+    ''', [userId]);
+
+    final count = Sqflite.firstIntValue(result);
+    print("eleman sayisi: ");
+    print(count);
+    return count ?? 0;
+  }
 }
