@@ -1,0 +1,63 @@
+name: consistify
+description: "Verimli görev yönetimi ve alışkanlık takibi uygulaması"
+# The following line prevents the package from being accidentally published to
+# pub.dev using `flutter pub publish`. This is preferred for private packages.
+publish_to: 'none' # Remove this line if you wish to publish to pub.dev
+
+version: 1.0.0+1
+
+environment:
+  sdk: ^3.7.0
+
+dependencies:
+  flutter:
+    sdk: flutter
+  shared_preferences: ^2.2.2
+  sqflite: ^2.0.0+4
+  path_provider: ^2.0.11
+  intl: ^0.18.1 
+  cupertino_icons: ^1.0.8
+  crypto: ^3.0.6
+  flutter_launcher_icons: ^0.14.4
+
+dev_dependencies:
+  flutter_test:
+    sdk: flutter
+  flutter_lints: ^5.0.0
+
+flutter_launcher_icons:
+  android: "launcher_icon"
+  ios: true
+  image_path: "assets/images/app_icon.png"
+  adaptive_icon_background: "#FFFFFF"
+  adaptive_icon_foreground: "assets/images/app_icon.png"
+  min_sdk_android: 21
+  web:
+    generate: false
+  windows:
+    generate: false
+  macos:
+    generate: false
+
+flutter:
+  uses-material-design: true
+
+  assets:
+    - assets/images/
+    - assets/category_icons/
+    - assets/items/
+    - assets/items/body/
+    - assets/items/eyes/
+    - assets/items/hair/
+    - assets/items/bottom/
+    - assets/items/top/
+    - assets/items/shoes/
+
+  fonts:
+    - family: CodecPro
+      fonts:
+        - asset: assets/fonts/CodecPro-Regular.ttf
+        - asset: assets/fonts/CodecPro-Italic.ttf
+        - asset: assets/fonts/Codec Pro ExtraBold.ttf
+        - asset: assets/fonts/Codec Pro Bold.ttf
+          weight: 700
