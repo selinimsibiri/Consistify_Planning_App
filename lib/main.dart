@@ -3,11 +3,20 @@ import 'package:consistify/screens/profile_screen.dart';
 import 'package:consistify/services/auth_service.dart';
 import 'screens/login_page.dart';
 import './db/database_helper.dart';
-
+import 'package:permission_handler/permission_handler.dart';
+import 'package:android_alarm_manager_plus/android_alarm_manager_plus.dart';
+@pragma('vm:entry-point')
+import 'package:consistify/notifications/notification_service.dart';
 
 void main() async {
   WidgetsFlutterBinding.ensureInitialized(); // Flutter uygulaması başlatılmadan önce asenkron işlemler yapılması gerekir
   await checkDatabase(); // Veritabanını kontrol et
+   if (await Permission.notification.isDenied) { // bildirimler icin kullanicidan izin alAdd commentMore actions
+    await Permission.notification.request();
+  }
+  await AndroidAlarmManager.initialize();
+  await NotificationManager.initialize();
+  await NotificationManager.scheduleHourlyAlarms();
   runApp(MyApp()); // Uygulamayı başlat
 }
 

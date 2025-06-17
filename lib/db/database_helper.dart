@@ -134,16 +134,6 @@ class DatabaseHelper {
           FOREIGN KEY (item_id) REFERENCES shop_items(id)
       );
       ''');
-      
-    await db.execute('''
-      CREATE TABLE streaks (
-          id INTEGER PRIMARY KEY AUTOINCREMENT,
-          user_id INTEGER,
-          date TEXT NOT NULL,
-          completed_tasks INTEGER DEFAULT 0,
-          FOREIGN KEY (user_id) REFERENCES users(id) ON DELETE CASCADE
-      );
-      ''');
 
     await db.execute('''
       CREATE TABLE user_selected_items (
@@ -329,7 +319,6 @@ class DatabaseHelper {
       final categories = await db.query('categories');
       final shopItems = await db.query('shop_items');
       final userItems = await db.query('user_items');
-      final streaks = await db.query('streaks');
       final userSelectedItems = await db.query('user_selected_items');
       final plans = await db.query('plans');      
       final planTasks = await db.query('plan_tasks');
@@ -348,7 +337,6 @@ class DatabaseHelper {
           'categories': categories,
           'shop_items': shopItems,
           'user_items': userItems,
-          'streaks': streaks,
           'user_selected_items': userSelectedItems,
           'plans': plans,
           'plan_tasks': planTasks,
@@ -368,7 +356,6 @@ class DatabaseHelper {
           'total_categories': categories.length,
           'total_shop_items': shopItems.length,
           'total_user_items': userItems.length,
-          'total_streaks': streaks.length,
           'total_selected_items': userSelectedItems.length,
           'total_plans': plans.length,          
           'total_plan_tasks': planTasks.length,
@@ -432,6 +419,26 @@ class DatabaseHelper {
       print('JSON export hatası: $e');
       rethrow;
     }
+  }
+  
+  Future<int> getUserCurrentStreak(int userId) async {
+    final db = await database;
+    final today = DateTime.now().toIso8601String().split('T')[0];
+    
+    final result = await db.query(
+      'user_stats',
+      columns: ['streak_count'],
+      where: 'user_id = ? AND date = ?',
+      whereArgs: [userId, today],
+      orderBy: 'id DESC',
+      limit: 1,
+    );
+    
+    if (result.isNotEmpty) {
+      return result.first['streak_count'] as int? ?? 0;
+    }
+    
+    return 0;
   }
   /* DATABASE FONKSIYONLARI SONU */
 
@@ -931,7 +938,7 @@ class DatabaseHelper {
         String statDate = stat['date'] as String;
         double completionRate = (stat['completion_rate'] as num).toDouble();
         
-        if (completionRate >= 0.3) { // %30 üzeri başarılı
+        if (completionRate > 0) { // %10 üzeri başarılı
           streak++;
           checkDate = checkDate.subtract(Duration(days: 1));
         } else {
@@ -1524,4 +1531,19 @@ class DatabaseHelper {
     return achievements;
   }
   /* BAŞARIM SİSTEMİ FONKSİYONLARI SONU */
+
+  /* NOTİFİKASYON SİSTEMİ FONKSİYONLARI BAŞLANGICI */
+  Future<int> getTotalIncompleteTaskCount(int userId) async {
+    final db = await database;
+
+    final result = await db.rawQuery('''
+      SELECT COUNT(*) as count
+      FROM tasks
+      WHERE user_id = ? AND is_completed = 0
+    ''', [userId]);
+
+    final count = Sqflite.firstIntValue(result);
+    return count ?? 0;
+  }
+  /* NOTİFİKASYON SİSTEMİ FONKSİYONLARI SONU */
 }

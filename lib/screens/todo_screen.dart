@@ -34,7 +34,7 @@ class _TodoScreenState extends State<TodoScreen> {
   List<Map<String, dynamic>> dailyTasks = [];
   List<int> completedTaskIds = [];
   int userCoins = 0;
-  int streakCount = 13;
+  int streakCount = 0;
 
   @override
   void initState() {
@@ -48,6 +48,14 @@ class _TodoScreenState extends State<TodoScreen> {
     await _loadTasks();
     await _loadUserCoins();
     await _loadCompletedTasks();
+    await _loadUserStreak();
+  }
+
+  Future<void> _loadUserStreak() async {
+    final streak = await DatabaseHelper.instance.getUserCurrentStreak(widget.userId);
+    setState(() {
+      streakCount = streak;
+    });
   }
 
   Future<void> _loadTasks() async {
@@ -110,9 +118,7 @@ class _TodoScreenState extends State<TodoScreen> {
     }
   }
 
-  Future<void> _toggleTask(int taskId, bool isCompleted) async {
-    print('🔄 Toggle başladı: taskId=$taskId, isCompleted=$isCompleted');
-    
+  Future<void> _toggleTask(int taskId, bool isCompleted) async {    
     try {
       final result = await DatabaseHelper.instance.toggleTaskCompletion(
         taskId, 
@@ -121,7 +127,6 @@ class _TodoScreenState extends State<TodoScreen> {
       );
             
       if (result['success']) {
-    
         // ÖNCE UI GÜNCELLENİR
         setState(() {
           if (isCompleted) {
@@ -158,6 +163,11 @@ class _TodoScreenState extends State<TodoScreen> {
             _showAchievementDialog(achievement);
           }
         }
+
+        // Streak güncellenir
+        setState(() {
+          streakCount = result['streakCount'] as int;
+        });
         
       } else {
         print('DB işlemi başarısız: ${result['error']}');
@@ -235,15 +245,15 @@ class _TodoScreenState extends State<TodoScreen> {
             child: SafeArea(
               child: Column(
                 children: [
-                  // 🎯 Üst Bar - Alt navigation ile aynı arka plan
+                  // Üst Bar
                   Container(
                     decoration: BoxDecoration(
-                      color: Color(0xFF1A1A1A), // Alt navigation ile aynı renk
+                      color: Color(0xFF1A1A1A),
                       boxShadow: [
                         BoxShadow(
                           color: Colors.black.withOpacity(0.3),
                           blurRadius: 10,
-                          offset: Offset(0, 2), // Aşağı doğru gölge
+                          offset: Offset(0, 2),
                         ),
                       ],
                     ),
@@ -267,7 +277,7 @@ class _TodoScreenState extends State<TodoScreen> {
                           ),
                         ),
                         
-                        // 📝 TO DO LIST başlığı - Dinamik genişlik
+                        // 📝 TO DO LIST
                         Expanded(
                           child: Container(
                             margin: EdgeInsets.symmetric(horizontal: 16),
@@ -301,7 +311,7 @@ class _TodoScreenState extends State<TodoScreen> {
                           ),
                         ),
                         
-                        // 🔥 Streak counter
+                        // Streak counter
                         Container(
                           padding: EdgeInsets.symmetric(horizontal: 12, vertical: 8),
                           decoration: BoxDecoration(
@@ -960,4 +970,6 @@ class _AddTaskDialogState extends State<AddTaskDialog> {
     _descriptionController.dispose();
     super.dispose();
   }
+
+  
 }
